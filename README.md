@@ -1,2 +1,2 @@
 # Model_BULAC_Uruguay
-Model Bottom-Up energy modelling of Latin America and the Caribbean (BULAC), develop by Climate Lead Group.
+Model Bottom-Up energy modelling of Latin America and the Caribbean (BULAC), develop by Climate Lead Group. This model, programmed in Python and based on the open source Open Source Energy Modelling System (OSeMOSYS), is Open Source Energy Modelling System (OSeMOSYS), allows the analysis of various scenarios to evaluate costs, benefits, and fiscal and distributive associated with the decarbonization of the energy and transport sector in a country or region. and transportation sector in a country or region. In addition, it considers the fiscal tax collection from the transportation sector.
