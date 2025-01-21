@@ -1,0 +1,41 @@
+# Created on Wed Oct 16 16:26:13 2024
+# Last updated: Jan. 19, 2025
+
+# @author: Climate Lead Group; Luis Victor-Gallardo, Jairo Quirós-Tortós,
+#         Andrey Salazar-Vargas
+# Suggested citation: UNEP (2022). Is Natural Gas a Good Investment for Latin 
+#                                 America and the Caribbean? From Economic to 
+#                                 Employment and Climate Impacts of the Power
+#                                 Sector. https://wedocs.unep.org/handle/20.500.11822/40923
+
+################## HEAD ##################
+# This is the BULAC Tier 2 config file
+##########################################
+
+# When calculate unit taxes through factors
+# the user have some options:
+# 1. For base case, with any changes, always
+# execute
+# 2. by_one_tax_by_time: in this option each
+# tax close the fiscal gap
+# 3. by_activity: put the factors for each tax
+# the module distribute according to the
+# activity data of each tech/fuel.
+# 4. by_factores_fuel: put the factors for each
+# tax, tech and fuel and the module respect
+# those factors.
+by_one_tax_by_time: False
+by_activity: False
+by_factores_fuel: False
+
+# This variable indicates if the user want to
+# interpolate the list of the unit taxes or not
+interpolate: True # True or False
+
+year_ini_inter: 2035
+
+scenarios_cases: 
+    - base
+    - one_tax_by_time
+    - factors_by_activity
+    # - factors
