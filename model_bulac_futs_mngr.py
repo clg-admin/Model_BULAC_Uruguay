@@ -73,50 +73,70 @@ if __name__ == '__main__':
     df2_sets2pp = pd.read_excel(di_nam, sheet_name="7_set2pp")
     df2_trans_sets = pd.read_excel(di_nam, sheet_name="8_trans_sets")
     df2_trans_sets_eq = pd.read_excel(di_nam, sheet_name="9_trans_sets_eq")
-    df2_agr_sets_eq = pd.read_excel(di_nam, sheet_name="10_agro_sets")
-    df2_res_sets_eq = pd.read_excel(di_nam, sheet_name="11_res_sets")
+    # df2_agr_sets_eq = pd.read_excel(di_nam, sheet_name="10_agro_sets")
+    # df2_res_sets_eq = pd.read_excel(di_nam, sheet_name="11_res_sets")
 
     # Scenarios sheets:
     df3_scen = pd.read_excel(di_nam, sheet_name="12_scen")
     df3_scen_matrix = pd.read_excel(di_nam, sheet_name="12.2_scen_matrix")
     df3_scen_dems = pd.read_excel(di_nam, sheet_name="13_scen_dems")
     df3_tpt_data = pd.read_excel(di_nam, sheet_name="14_trans_data")
-    df3_agr_data = pd.read_excel(di_nam, sheet_name="15_agro_data")
-    df3_res_data = pd.read_excel(di_nam, sheet_name="16_res_data")
+    # df3_agr_data = pd.read_excel(di_nam, sheet_name="15_agro_data")
+    # df3_res_data = pd.read_excel(di_nam, sheet_name="16_res_data")
 
     # Technical sheets:
-    df4_rac_data = pd.read_excel(di_nam, sheet_name="17_rac_data")  # nueva!
-    df4_ef_agro_res = \
-        pd.read_excel(di_nam, sheet_name="18_agro_res_emissions")
-    df4_ar_emi = pd.read_excel(di_nam, sheet_name="19_ar_emissions")  # nueva!
+    # df4_rac_data = pd.read_excel(di_nam, sheet_name="17_rac_data")  # nueva!
+    # df4_ef_agro_res = \
+    #     pd.read_excel(di_nam, sheet_name="18_agro_res_emissions")
+    # df4_ar_emi = pd.read_excel(di_nam, sheet_name="19_ar_emissions")  # nueva!
     df4_cfs = pd.read_excel(di_nam, sheet_name="20_cfs")
     df4_ef = pd.read_excel(di_nam, sheet_name="21_emissions")
-    df4_rac_emi = pd.read_excel(di_nam, sheet_name="22_rac_emissions")  # nueva!
+    # df4_rac_emi = pd.read_excel(di_nam, sheet_name="22_rac_emissions")  # nueva!
     df4_job_fac = pd.read_excel(di_nam, sheet_name="23_job_fac")
     df4_tran_dist_fac = pd.read_excel(di_nam, sheet_name="24_t&d")
     df4_caps_rest = pd.read_excel(di_nam, sheet_name="25_cap_rest")
 
     # Economic sheets:
     df5_ext = pd.read_excel(di_nam, sheet_name="26_ext")
-    d5_res = pd.read_excel(di_nam, sheet_name="27_res_cost")
+    # d5_res = pd.read_excel(di_nam, sheet_name="27_res_cost")
     d5_power_techs = pd.read_excel(di_nam, sheet_name="28_power_cost")
     d5_tpt = pd.read_excel(di_nam, sheet_name="29_trans_cost")
-    d5_agr = pd.read_excel(di_nam, sheet_name="30_agro_cost")
-    d5_rac = pd.read_excel(di_nam, sheet_name="31_rac_cost")  # nueva!
+    # d5_agr = pd.read_excel(di_nam, sheet_name="30_agro_cost")
+    # d5_rac = pd.read_excel(di_nam, sheet_name="31_rac_cost")  # nueva!
     d5_tax = pd.read_excel(di_nam, sheet_name="32_tax")
     
     # Define base inputs AND open the reference data bases.
     base_inputs = [
-        df1_general, df2_fuel_eq, df2_EB, 
-        df2_InsCap, df2_scen_sets, df2_sets2pp, 
-        df2_trans_sets, df2_trans_sets_eq, df2_agr_sets_eq,
-        df2_res_sets_eq, df3_scen, df3_scen_matrix, df3_scen_dems, 
-        df3_tpt_data, df3_agr_data, df3_res_data, 
-        df4_rac_data, df4_ef_agro_res, df4_ar_emi, 
-        df4_cfs, df4_ef, df4_rac_emi, 
-        df4_job_fac, df4_tran_dist_fac, df4_caps_rest,
-        df5_ext, d5_res, d5_power_techs, 
-        d5_tpt, d5_agr, d5_rac, 
+        df1_general,
+        df2_fuel_eq,
+        df2_EB, 
+        df2_InsCap,
+        df2_scen_sets,
+        df2_sets2pp, 
+        df2_trans_sets,
+        df2_trans_sets_eq,
+        # df2_agr_sets_eq,
+        # df2_res_sets_eq,
+        df3_scen,
+        df3_scen_matrix,
+        df3_scen_dems, 
+        df3_tpt_data,
+        # df3_agr_data,
+        # df3_res_data, 
+        # df4_rac_data,
+        # df4_ef_agro_res,
+        # df4_ar_emi, 
+        df4_cfs, df4_ef,
+        # df4_rac_emi, 
+        df4_job_fac,
+        df4_tran_dist_fac,
+        df4_caps_rest,
+        df5_ext, 
+        # d5_res,
+        d5_power_techs, 
+        d5_tpt,
+        # d5_agr,
+        # d5_rac, 
         d5_tax
     ]
     

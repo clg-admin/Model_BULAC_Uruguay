@@ -123,13 +123,11 @@ def run_model(dict_tier2_package):
     # before calling this function.
     year_to_adjust = 2050
     fiscal_gaps, adjustments, adjustments_percent, tax_contribution = calculate_fiscal_gap_and_adjusted_tax_contributions(year_to_adjust, dict_income_scen, time_vector)
-    # print(adjustments_percent)
     # sys.exit()
     # Calculate unit taxes for base case without adjusments
     unit_taxes_base_case, unit_taxes_percentage = calculate_unit_tax_for_all_scenarios(year_to_adjust, dict_scen, dict_tax_scen, dict_activities_out, time_vector, params_tier2, dict_mult_depr)
     
-    # print(1,unit_taxes_base_case['ACELERADO']['5_Southern Cone']['Uruguay']['Patente']['Buses MVD']['DIESEL OIL'])
-    # print(2,unit_taxes_percentage['ACELERADO']['5_Southern Cone']['Uruguay']['Patente']['Buses MVD']['DIESEL OIL'])
+
     # sys.exit()
     
     # Take the base BAU scenario of unit taxes
@@ -137,10 +135,7 @@ def run_model(dict_tier2_package):
     unit_taxes_bau['BAU'] = deepcopy(unit_taxes_base_case['BAU'])
     unit_taxes_bau_percentage = {}
     unit_taxes_bau_percentage['BAU'] = deepcopy(unit_taxes_percentage['BAU'])
-    
 
-    # sys.exit(6)
-    
     
     # Define the Excel file path
     taxes_excel_name = 'Taxes_Factors.xlsx'
@@ -236,8 +231,6 @@ def run_model(dict_tier2_package):
                                                           columns_factors[col_i],
                                                           taxes_excel, scenario_list,
                                                           regions_list, country_list)
-                                # print(factors_by_fuel)
-                                # sys.exit()
 
                         
                     

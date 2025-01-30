@@ -276,36 +276,36 @@ df2_scen_sets = pd.read_excel(di_nam, sheet_name="6_scen_sets")
 df2_sets2pp = pd.read_excel(di_nam, sheet_name="7_set2pp")
 df2_trans_sets = pd.read_excel(di_nam, sheet_name="8_trans_sets")
 df2_trans_sets_eq = pd.read_excel(di_nam, sheet_name="9_trans_sets_eq")
-df2_agr_sets_eq = pd.read_excel(di_nam, sheet_name="10_agro_sets")
-df2_res_sets_eq = pd.read_excel(di_nam, sheet_name="11_res_sets")
+# df2_agr_sets_eq = pd.read_excel(di_nam, sheet_name="10_agro_sets")
+# df2_res_sets_eq = pd.read_excel(di_nam, sheet_name="11_res_sets")
 
 # Scenarios sheets:
 df3_scen = pd.read_excel(di_nam, sheet_name="12_scen")
 df3_scen_matrix = pd.read_excel(di_nam, sheet_name="12.2_scen_matrix") # viene de Relac
 df3_scen_dems = pd.read_excel(di_nam, sheet_name="13_scen_dems")
 df3_tpt_data = pd.read_excel(di_nam, sheet_name="14_trans_data")
-df3_agr_data = pd.read_excel(di_nam, sheet_name="15_agro_data")
-df3_res_data = pd.read_excel(di_nam, sheet_name="16_res_data")
+# df3_agr_data = pd.read_excel(di_nam, sheet_name="15_agro_data")
+# df3_res_data = pd.read_excel(di_nam, sheet_name="16_res_data")
 
 # Technical sheets:
-df4_rac_data = pd.read_excel(di_nam, sheet_name="17_rac_data")  # nueva!
-df4_ef_agro_res = \
-    pd.read_excel(di_nam, sheet_name="18_agro_res_emissions")
-df4_ar_emi = pd.read_excel(di_nam, sheet_name="19_ar_emissions")  # nueva!
+# df4_rac_data = pd.read_excel(di_nam, sheet_name="17_rac_data")  # nueva!
+# df4_ef_agro_res = \
+#     pd.read_excel(di_nam, sheet_name="18_agro_res_emissions")
+# df4_ar_emi = pd.read_excel(di_nam, sheet_name="19_ar_emissions")  # nueva!
 df4_cfs = pd.read_excel(di_nam, sheet_name="20_cfs")
 df4_ef = pd.read_excel(di_nam, sheet_name="21_emissions")
-df4_rac_emi = pd.read_excel(di_nam, sheet_name="22_rac_emissions")  # nueva!
+# df4_rac_emi = pd.read_excel(di_nam, sheet_name="22_rac_emissions")  # nueva!
 df4_job_fac = pd.read_excel(di_nam, sheet_name="23_job_fac")
 df4_tran_dist_fac = pd.read_excel(di_nam, sheet_name="24_t&d")
 df4_caps_rest = pd.read_excel(di_nam, sheet_name="25_cap_rest")
 
 # Economic sheets:
 df5_ext = pd.read_excel(di_nam, sheet_name="26_ext")
-d5_res = pd.read_excel(di_nam, sheet_name="27_res_cost")
+# d5_res = pd.read_excel(di_nam, sheet_name="27_res_cost")
 d5_power_techs = pd.read_excel(di_nam, sheet_name="28_power_cost")
 d5_tpt = pd.read_excel(di_nam, sheet_name="29_trans_cost")
-d5_agr = pd.read_excel(di_nam, sheet_name="30_agro_cost")
-d5_rac = pd.read_excel(di_nam, sheet_name="31_rac_cost")  # nueva!
+# d5_agr = pd.read_excel(di_nam, sheet_name="30_agro_cost")
+# d5_rac = pd.read_excel(di_nam, sheet_name="31_rac_cost")  # nueva!
 d5_tax = pd.read_excel(di_nam, sheet_name="32_tax")
 
 ##############################################################################
@@ -536,6 +536,10 @@ scenarios_cases_list = params_tier2['scenarios_cases']
 scenario_list = list(set(df3_scen['Scenario'].tolist()))
 scenario_list.remove('ALL')
 scenario_list.sort()
+scenarios_exceptions = ['ACELERADO', 'ASPIRACIONAL']
+for scen_del in scenarios_exceptions:
+    if scen_del in scenario_list:
+        scenario_list.remove(scen_del)
 dict_test_transport_model = {}
 
 # Function #2
@@ -1289,7 +1293,7 @@ dict_energy_demand_by_fuel_sum = {
 
 for s in range(len(scenario_list)):
     this_scen = scenario_list[s]
-    #print('# 1 - ', this_scen)
+    # print('# 1 - ', this_scen)
 
     dict_test_transport_model.update({this_scen:{}})
 
@@ -4956,6 +4960,7 @@ for s in range(len(scenario_list)):
                     list_atax, ref_atax, mult_depr, tech_km = fun_unpack_taxes(atax, t, f, d5_tax, time_vector, dict_km)
                     list_atax_unit = []
                     list_atax_unit_without_cost = []
+                    list_conv_cte_unit_tax = []
                 
                     for y in range(len(time_vector)):
                         try:
@@ -4971,8 +4976,16 @@ for s in range(len(scenario_list)):
                         list_atax_unit.append(add_atax_unit*mult_depr)
                         if atax == 'Rodaje':
                             list_atax_unit_without_cost.append(list_atax[y])
+                            list_conv_cte_unit_tax.append(list_atax[y])
+                        
                         else:
                             list_atax_unit_without_cost.append(0)
+                            if apply_costs_atax !=0:
+                                list_conv_cte_unit_tax.append(100/(mult_depr*apply_costs_atax)) 
+                            elif apply_costs_atax ==0:                              
+                                list_conv_cte_unit_tax.append(0)
+                    
+                    mult_depr = list_conv_cte_unit_tax
                 
                     return list_atax, list_atax_unit, ref_atax, list_atax_unit_without_cost, tech_km, mult_depr
                 
@@ -5018,14 +5031,19 @@ for s in range(len(scenario_list)):
                                 add_atax_val = list_atax_unit[y]*tot_fleet_lst[y]
                             elif ref_atax == 'KmCost':
                                 add_atax_val = list_atax_unit_without_cost[y]*tot_fleet_lst[y]*tech_km
+
+                                if atax == 'Rodaje':
+                                        add_atax_val = 0.0
+                                
                             else:  # Variable cost
                                 add_atax_val = list_atax_unit[y]*fuel_con_lst[y]/conv_cons
                             add_atax_val_lst.append(add_atax_val)
                             
+                            # if t == ('Automoviles' or 'SUV, Crossover y Rural') and time_vector[y] == 2050:
+                            #     print(atax,t,f,list_atax_unit[y]*mult_depr[y],add_atax_val)
+                            
                         if ref_atax != 'None':
                             rel_tax_activity.update({atax: ref_atax})
-                        # if atax == 'Rodaje' and t == 'Automoviles' and f== 'ELECTRICIDAD':
-                        #     print(add_atax_val_lst) 
                         dict_tax_out[atax][t][f] = deepcopy(add_atax_val_lst)
                         dict_tax_unit_out[atax][t][f] = deepcopy(list_atax)
                         rel_tax_activity2[atax][t][f] = deepcopy(ref_atax)
@@ -5078,10 +5096,13 @@ for s in range(len(scenario_list)):
                         dict_fopex_out[t][f] = usd_fopex_lst
                         dict_vopex_out[t][f] = usd_vopex_lst
                         dict_conv_cons[t][f] = conv_cons
+                        # if t == 'Birodados' and f == 'ELECTRICIDAD':
+                        #     print(this_scen,usd_capex_lst)
 
                         # print(scenario_list[s])
                         
                         # Assuming the necessary variables like new_fleet_lst, tot_fleet_lst, etc. are defined
+                        
                         dict_tax_out, rel_tax_activity, dict_tax_unit_out, \
                         rel_tax_activity2, dict_mult_depr = calculate_tax_values(t, f, tax_params, d5_tax, time_vector, \
                                              apply_costs, new_fleet_lst, tot_fleet_lst, fuel_con_lst, \
@@ -8941,20 +8962,19 @@ list_outputs = [
     'Transport Tax Otros_Gasoil [$]',  # 14
     'Transport Tax Tasa_Consular [$]',  # 15
     'Transport Tax Rodaje [$]',  # 16
-    'Unit CAPEX',  # 17
-    'Unit Fixed OPEX',  # 18
-    'Unit Variable OPEX',  # 19
-    'Unit Tax Imports',  # 20
-    'Unit Tax IMESI_Venta',  # 21
-    'Unit Tax IVA_Venta',  # 22
-    'Unit Tax Patente',  # 23
-    'Unit Tax IMESI_Combust',  # 24
-    'Unit Tax IVA_Gasoil',  # 25
-    'Unit Tax IVA_Elec',  # 26
-    'Unit Tax IC',  # 27
-    'Unit Tax Otros_Gasoil',  # 28
-    'Unit Tax Tasa_Consular',  # 29
-    'Unit Tax Rodaje'  # 30
+    'Unit Tax Imports',  # 17
+    'Unit Tax IMESI_Venta',  # 18
+    'Unit Tax IVA_Venta',  # 19
+    'Unit Tax Patente',  # 20
+    'Unit Tax IMESI_Combust',  # 21
+    'Unit Tax IVA_Gasoil',  # 22
+    'Unit Tax IVA_Elec',  # 23
+    'Unit Tax IC',  # 24
+    'Unit Tax Otros_Gasoil',  # 25
+    'Unit Tax Tasa_Consular',  # 26
+    'Unit Tax Rodaje',  # 27
+    'Fuel Consumption', # 28
+    'Conversion Fuel Constant' # 29
 ]
 
 list_inputs_add = [i + ' (input)' for i in list_inputs]
@@ -9131,7 +9151,7 @@ if overwrite_transport_model:
     list_fuel_clean += list(dict_eq_transport_fuels.keys())
 list_fuel_clean += ['']
 
-output_lists = {f'h_o{i}': [] for i in range(1, 31)}
+output_lists = {f'h_o{i}': [] for i in range(1, 30)}
 input_lists = {f'h_i{i}': [] for i in range(1, 6)}
 
 print('\n')
@@ -9211,10 +9231,10 @@ for sc in range(len(cases_list)):
                             # Lists of IDs for case conditions
                             list_output_01 = []
                             list_output_10 = []
-                            list_output_00 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30]
+                            list_output_00 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28,29]
                             list_output_11 = []
                             
-                            for output_id in range(1, 31):  # Loop for all outputs, the second number y one more than the last output
+                            for output_id in range(1, 30):  # Loop for all outputs, the second number y one more than the last output
     
                                 # Conditions to select the correct case condition for combination of "fuel" and "tech"                        
                                 if output_id in list_output_01:
@@ -9226,7 +9246,8 @@ for sc in range(len(cases_list)):
                                 elif output_id in list_output_11:
                                     case_condition = '11'   
                                     
-                                # # Conditions to select the correct parameters for which one case
+                                # Conditions to select the correct parameters for which one case
+
                                 # if output_id in []:
                                 #     # Case 'two'
                                 #     case_type = 'two'
@@ -9248,13 +9269,20 @@ for sc in range(len(cases_list)):
                                 #     scd_key = fuel
                                 #     thd_key = y
                                 #     fth_key = None
-                                if output_id in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30]:
+                                if output_id in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28]:
                                     # Case 'four' 1
                                     case_type = 'four'
                                     fst_key = list_outputs[output_id - 1]
                                     scd_key = tech
                                     thd_key = fuel
                                     fth_key = y
+                                elif output_id in [29]:
+                                    # Case 'two'
+                                    case_type = 'three'
+                                    fst_key = list_outputs[output_id - 1]
+                                    scd_key = tech
+                                    thd_key = fuel
+                                    fth_key = None
                                 # elif output_id == 14:
                                 #     # Case 'four' 2
                                 #     case_type = 'four'
@@ -9266,11 +9294,11 @@ for sc in range(len(cases_list)):
                                 # Process outputs                            
                                 count_empties, output_lists[f'h_o{output_id}'] = handle_processes(count_empties, output_lists[f'h_o{output_id}'], this_data_dict, fuel, tech, case_condition, case_type, fst_key, scd_key, thd_key, fth_key)
                                                         
-                            if count_empties == 35:  # gotta pop, because it is an empty row:
+                            if count_empties == 34:  # gotta pop, because it is an empty row:
                                 # Inputs
                                 input_lists = pop_last_from_inputs(input_lists, range(1, 6))
                                 # Outputs
-                                output_lists = pop_last_from_outputs(output_lists, range(1, 31))
+                                output_lists = pop_last_from_outputs(output_lists, range(1, 30))
     
                             else:
                                 h_scenario.append(this_scen_case)
@@ -9287,7 +9315,7 @@ for sc in range(len(cases_list)):
 
 variable_names = \
     [f'h_i{i}' for i in range(1, 6)] + \
-    [f'h_o{i}' for i in range(1, 31)]
+    [f'h_o{i}' for i in range(1, 30)]
 
 # Construct list_variables by accessing dictionaries
 list_inputs_variables = [input_lists[var_name] for var_name in variable_names if var_name in input_lists]

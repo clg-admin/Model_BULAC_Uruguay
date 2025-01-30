@@ -1675,9 +1675,6 @@ def convert_variable_cost_unit(unit_var_cost, f, conv_cons):
 		conv_cons = 3.6e-9  # from kWh to PJ
 	if unit_var_cost == 'USD/kg':
 		conv_cons = (3.6 * 33.33) * 1e-9  # from kg to PJ
-	#if unit_var_cost == 'USD/pkm':
-	#    print(conv_cons)
-	#    sys.exit()
 	return conv_cons
 
 # Function #53
@@ -1704,6 +1701,7 @@ def unpack_taxes(atax, t, f, d5_tax, time_vector, apply_costs, dict_km):
     list_atax, ref_atax, mult_depr, tech_km = fun_unpack_taxes(atax, t, f, d5_tax, time_vector, dict_km)
     list_atax_unit = []
     list_atax_unit_without_cost = []
+    list_conv_cte_unit_tax = []
 
     for y in range(len(time_vector)):
         try:
@@ -1719,67 +1717,77 @@ def unpack_taxes(atax, t, f, d5_tax, time_vector, apply_costs, dict_km):
         list_atax_unit.append(add_atax_unit*mult_depr)
         if atax == 'Rodaje':
             list_atax_unit_without_cost.append(list_atax[y])
+            list_conv_cte_unit_tax.append(list_atax[y])
         else:
             list_atax_unit_without_cost.append(0)
+            if apply_costs_atax !=0:
+                list_conv_cte_unit_tax.append(100/(mult_depr*apply_costs_atax)) 
+            elif apply_costs_atax ==0:                              
+                list_conv_cte_unit_tax.append(0)
+    
+    mult_depr = list_conv_cte_unit_tax
 
     return list_atax, list_atax_unit, ref_atax, list_atax_unit_without_cost, tech_km, mult_depr
 
 # Function #54
 def calculate_tax_values(t, f, tax_params, d5_tax, time_vector, apply_costs, new_fleet_lst, tot_fleet_lst, fuel_con_lst, conv_cons, dict_tax_out, rel_tax_activity, dict_tax_unit_out,rel_tax_activity2,scenario,dict_km,dict_mult_depr):
-	"""
-	Calculate and store tax values based on the provided tax parameters, vehicle type, fuel type, and costs.
+    """
+    Calculate and store tax values based on the provided tax parameters, vehicle type, fuel type, and costs.
 
-	Args:
-	- t (str): The specific transport type.
-	- f (str): The specific fuel type.
-	- tax_params (list): List of different tax parameters.
-	- d5_tax (dict): Dictionary containing tax data.
-	- time_vector (list): List of years for which the calculations are performed.
-	- apply_costs (dict): Dictionary containing costs applied for tax calculations.
-	- new_fleet_lst (list): List of new fleet values.
-	- tot_fleet_lst (list): List of total fleet values.
-	- fuel_con_lst (list): List of fuel consumption values.
-	- conv_cons (float): Conversion constant for cost calculations.
-	- dict_tax_out (dict): Initialized nested dictionary for storing tax outputs.
-	- rel_tax_activity (dict): Initialized nested dictionary for storing activity.
-	- dict_tax_unit_out (dict): Initialized nested dictionary for storing tx unit outputs.
-	- dict_km (dict): Dictionaru containing km by tech.
+    Args:
+    - t (str): The specific transport type.
+    - f (str): The specific fuel type.
+    - tax_params (list): List of different tax parameters.
+    - d5_tax (dict): Dictionary containing tax data.
+    - time_vector (list): List of years for which the calculations are performed.
+    - apply_costs (dict): Dictionary containing costs applied for tax calculations.
+    - new_fleet_lst (list): List of new fleet values.
+    - tot_fleet_lst (list): List of total fleet values.
+    - fuel_con_lst (list): List of fuel consumption values.
+    - conv_cons (float): Conversion constant for cost calculations.
+    - dict_tax_out (dict): Initialized nested dictionary for storing tax outputs.
+    - rel_tax_activity (dict): Initialized nested dictionary for storing activity.
+    - dict_tax_unit_out (dict): Initialized nested dictionary for storing tx unit outputs.
+    - dict_km (dict): Dictionaru containing km by tech.
 
-	Returns:
-	- dict_tax_out (dict): Updated dictionary with calculated tax values.
-	- rel_tax_activity (dict): References to choose activity.
-	- dict_tax_unit_out (dict): Updated dictionary with calculated tax unit values.
-	"""
-	
+    Returns:
+    - dict_tax_out (dict): Updated dictionary with calculated tax values.
+    - rel_tax_activity (dict): References to choose activity.
+    - dict_tax_unit_out (dict): Updated dictionary with calculated tax unit values.
+    """
+    
 
-	for atax in tax_params:
-		list_atax, list_atax_unit, ref_atax, list_atax_unit_without_cost, tech_km, mult_depr = unpack_taxes(atax, t, f, d5_tax, time_vector, apply_costs, dict_km)
-		add_atax_val_lst = []
-		
+    for atax in tax_params:
+        list_atax, list_atax_unit, ref_atax, list_atax_unit_without_cost, tech_km, mult_depr = unpack_taxes(atax, t, f, d5_tax, time_vector, apply_costs, dict_km)
+        add_atax_val_lst = []
+        
 
-		for y in range(len(time_vector)):
-			if ref_atax == 'CapitalCost':
-				add_atax_val = list_atax_unit[y]*new_fleet_lst[y]
-				rel_tax_activity[atax] = ref_atax
-				
-			elif ref_atax == 'CapitalCost*':
-				add_atax_val = list_atax_unit[y]*tot_fleet_lst[y]
-			elif ref_atax == 'KmCost':
-				add_atax_val = list_atax_unit_without_cost[y]*tot_fleet_lst[y]*tech_km
-			else:  # Variable cost
-				add_atax_val = list_atax_unit[y]*fuel_con_lst[y]/conv_cons
-			add_atax_val_lst.append(add_atax_val)
-			
-		if ref_atax != 'None':
-			rel_tax_activity.update({atax: ref_atax})
-		# if atax == 'Rodaje' and t == 'Automoviles' and f== 'ELECTRICIDAD':
-		#     print(add_atax_val_lst) 
-		dict_tax_out[atax][t][f] = deepcopy(add_atax_val_lst)
-		dict_tax_unit_out[atax][t][f] = deepcopy(list_atax)
-		rel_tax_activity2[atax][t][f] = deepcopy(ref_atax)
-		dict_mult_depr[atax][t][f] = deepcopy(mult_depr)
-	return dict_tax_out, rel_tax_activity, dict_tax_unit_out, rel_tax_activity2, dict_mult_depr
-	
+        for y in range(len(time_vector)):
+            if ref_atax == 'CapitalCost':
+                add_atax_val = list_atax_unit[y]*new_fleet_lst[y]
+                rel_tax_activity[atax] = ref_atax
+                
+            elif ref_atax == 'CapitalCost*':
+                add_atax_val = list_atax_unit[y]*tot_fleet_lst[y]
+            elif ref_atax == 'KmCost':
+                add_atax_val = list_atax_unit_without_cost[y]*tot_fleet_lst[y]*tech_km
+
+                if atax == 'Rodaje':
+                    add_atax_val = 0.0
+                
+            else:  # Variable cost
+                add_atax_val = list_atax_unit[y]*fuel_con_lst[y]/conv_cons
+            add_atax_val_lst.append(add_atax_val)
+            
+        if ref_atax != 'None':
+            rel_tax_activity.update({atax: ref_atax})
+
+        dict_tax_out[atax][t][f] = deepcopy(add_atax_val_lst)
+        dict_tax_unit_out[atax][t][f] = deepcopy(list_atax)
+        rel_tax_activity2[atax][t][f] = deepcopy(ref_atax)
+        dict_mult_depr[atax][t][f] = deepcopy(mult_depr)
+    return dict_tax_out, rel_tax_activity, dict_tax_unit_out, rel_tax_activity2, dict_mult_depr
+
 # Function #55
 def update_transport_vector(fuels, dict_eq_transport_fuels, dict_trn_pj, time_vector, \
 							dict_energy_demand_trn,dict_eq_trn_fuels_rev):
@@ -4413,37 +4421,37 @@ def bulac_engine(base_inputs, dict_database, fut_id, this_hypercube, df_exp,
     df2_sets2pp = base_inputs[5]
     df2_trans_sets = base_inputs[6]
     df2_trans_sets_eq = base_inputs[7]
-    df2_agr_sets_eq = base_inputs[8]
-    df2_res_sets_eq = base_inputs[9]
+    # df2_agr_sets_eq = base_inputs[8]
+    # df2_res_sets_eq = base_inputs[9]
     
     # Scenarios sheets:
-    df3_scen = base_inputs[10]
-    df3_scen_matrix = base_inputs[11]  # viene de Relac
-    df3_scen_dems = base_inputs[12]
-    df3_tpt_data = base_inputs[13]
-    df3_agr_data = base_inputs[14]
-    df3_res_data = base_inputs[15]
+    df3_scen = base_inputs[8]
+    df3_scen_matrix = base_inputs[9]  # viene de Relac
+    df3_scen_dems = base_inputs[10]
+    df3_tpt_data = base_inputs[11]
+    # df3_agr_data = base_inputs[14]
+    # df3_res_data = base_inputs[15]
                                    
     
     # Technical sheets:
-    df4_rac_data = base_inputs[16]  # nueva!
-    df4_ef_agro_res = base_inputs[17]
-    df4_ar_emi = base_inputs[18]  # nueva!
-    df4_cfs = base_inputs[19]
-    df4_ef = base_inputs[20]
-    df4_rac_emi = base_inputs[21]  # nueva!
-    df4_job_fac = base_inputs[22]
-    df4_tran_dist_fac = base_inputs[23]
-    df4_caps_rest = base_inputs[24]
+    # df4_rac_data = base_inputs[16]  # nueva!
+    # df4_ef_agro_res = base_inputs[17]
+    # df4_ar_emi = base_inputs[18]  # nueva!
+    df4_cfs = base_inputs[12]
+    df4_ef = base_inputs[13]
+    # df4_rac_emi = base_inputs[21]  # nueva!
+    df4_job_fac = base_inputs[14]
+    df4_tran_dist_fac = base_inputs[15]
+    df4_caps_rest = base_inputs[16]
     
     # Economic sheets:
-    df5_ext = base_inputs[25]
-    d5_res = base_inputs[26]
-    d5_power_techs = base_inputs[27]
-    d5_tpt = base_inputs[28]
-    d5_agr = base_inputs[29]
-    d5_rac = base_inputs[30]  # nueva!
-    d5_tax = base_inputs[31]
+    df5_ext = base_inputs[17]
+    # d5_res = base_inputs[26]
+    d5_power_techs = base_inputs[18]
+    d5_tpt = base_inputs[19]
+    # d5_agr = base_inputs[29]
+    # d5_rac = base_inputs[30]  # nueva!
+    d5_tax = base_inputs[20]
     
     # Unpack config dicts
     params_tier2 = params_dict['params_tier2']
