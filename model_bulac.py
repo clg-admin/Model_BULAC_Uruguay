@@ -48,7 +48,7 @@ model_irote = False
 # SIMULATION: Implement the equations designed in "model_design" #
 # Recording initial time of execution
 start_1 = time.time()
-di_nam = 'data_inputs_20250119.xlsx'
+di_nam = 'data_inputs_20250130.xlsx'
 
 ###############################################################################
 # 0) open the reference data bases.
