@@ -177,18 +177,6 @@ def run_model(dict_tier2_package):
                             base_dict_scen = deepcopy(unit_taxes_base_case)
                             
                         elif adjust_id == 'one_tax_by_time' and params_tier2['by_one_tax_by_time']:
-                            # # Make sure that the required structure is initialized.
-                            # if adjust_id not in filtered_dict_scen:
-                            #     filtered_dict_scen[adjust_id] = {}
-                            # if scenario not in filtered_dict_scen[adjust_id]:
-                            #     filtered_dict_scen[adjust_id][scenario] = {}
-                            # if region not in filtered_dict_scen[adjust_id][scenario]:
-                            #     filtered_dict_scen[adjust_id][scenario][region] = {}
-                            # if country not in filtered_dict_scen[adjust_id][scenario][region]:
-                            #     filtered_dict_scen[adjust_id][scenario][region][country] = {}
-    
-                            # filtered_dict_scen[adjust_id][scenario][region][country][tax] = deepcopy(techs_data)
-                            
                             # Calculate unit taxes for the year year_to_adjust using predefined scenario,
                             # adjustments, and activities data.
                             unit_taxes_one_tax_time = {}
@@ -262,7 +250,6 @@ def run_model(dict_tier2_package):
                                     # Call the function to calculate unit taxes using predefined factors for 
                                     # each tax/tech/fuel and fiscal gaps
                                     count_wrong_activity_fuel = 0   
-                                    # print('antes de la funcion:',dict_scen['ACELERADO']['5_Southern Cone']['Uruguay']['Transport Tax IMESI_Combust [$]']['Automoviles']['GASOLINA/ALCOHOL'][0])
                                     unit_taxes_by_factor, unit_taxes_by_factor_percentage, warning_count = calculate_unit_tax_with_factors_for_fuels(
                                         year=year_to_adjust,
                                         dict_scen=dict_scen_2,

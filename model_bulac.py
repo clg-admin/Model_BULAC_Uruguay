@@ -4658,7 +4658,7 @@ for s in range(len(scenario_list)):
                 emissions_demand = {}  # crucial output              
                 
                 # Function #47
-                def calculate_fleet(distribution, load_factor, distance, vehicle_type, fuel):
+                def calculate_fleet(distribution, load_factor, distance):
                     """
                     Calculate the fleet size based on the distribution of vehicles, load factor, and distance covered.
                     
@@ -4777,19 +4777,16 @@ for s in range(len(scenario_list)):
                             dict_trn_pj_2[this_f][t][y] = deepcopy(add_fuel_con)
                             
                             
-                            if this_scen == 'NETZERO' and t == 'CamionesA' and fuel == 'GASOLINA/ALCOHOL' and y==time_vector[-1]:
-                                print(this_scen)
-                                print(t)
-                                print('unit_tax:',add_fuel_con)
                 
                             this_gpkm_gtkm_k = this_gpkm_gtkm * this_sh_fl
                             dict_gpkm_gtkm_k[t][this_f][y] = this_gpkm_gtkm_k
                 
-                            this_fleet_k = calculate_fleet(this_gpkm_gtkm_k, dict_lf[t], dict_km[t], t, this_f)
-                            if this_fleet_k < 10:
-                                dict_fleet_k[t][this_f][y] = 0
-                            else:
-                                dict_fleet_k[t][this_f][y] = this_fleet_k
+                            this_fleet_k = calculate_fleet(this_gpkm_gtkm_k, dict_lf[t], dict_km[t])
+                            # if this_fleet_k < 10:
+                            #     dict_fleet_k[t][this_f][y] = 0
+                            # else:
+                            #     dict_fleet_k[t][this_f][y] = this_fleet_k
+                            dict_fleet_k[t][this_f][y] = this_fleet_k
 
                             if y == 0 and dict_resi_cap_trn[t][this_f][0] != 0:
                                 dict_diffs_f_rf[this_f].update({t: this_fleet_k / dict_resi_cap_trn[t][this_f][0]})

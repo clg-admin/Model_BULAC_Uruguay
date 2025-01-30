@@ -1506,7 +1506,7 @@ def handle_projection(projection_type, dict_proj_fleet, fuel, vehicle_type, year
 	return dict_proj_fleet
 	
 # Function #47
-def calculate_fleet(distribution, load_factor, distance, vehicle_type, fuel):
+def calculate_fleet(distribution, load_factor, distance):
 	"""
 	Calculate the fleet size based on the distribution of vehicles, load factor, and distance covered.
 	
@@ -1514,8 +1514,6 @@ def calculate_fleet(distribution, load_factor, distance, vehicle_type, fuel):
 	- distribution (float): The distribution value for the specific vehicle type and fuel.
 	- load_factor (float): The load factor for the specific vehicle type and fuel.
 	- distance (float): The distance covered by the specific vehicle type and fuel.
-	- vehicle_type (str): The type of vehicle.
-	- fuel (str): The type of fuel.
 	
 	Returns:
 	- (float): The calculated fleet size for the given vehicle type and fuel.
@@ -7570,16 +7568,13 @@ def bulac_engine(base_inputs, dict_database, fut_id, this_hypercube, df_exp,
                                 dict_gpkm_gtkm_k[t][this_f][y] = this_gpkm_gtkm_k
                     
                                 # Calculate the fleet:
-                                this_fleet_k = calculate_fleet(this_gpkm_gtkm_k, dict_lf[t], dict_km[t], t, this_f)
-                                if this_fleet_k*mult_fleet[y] < 10:
-                                    dict_fleet_k[t][this_f][y] = 0
-                                else:
-                                    dict_fleet_k[t][this_f][y] = this_fleet_k*mult_fleet[y]
-                                # dict_fleet_k[t][this_f][y] = this_fleet_k
+                                this_fleet_k = calculate_fleet(this_gpkm_gtkm_k, dict_lf[t], dict_km[t])
+                                # if this_fleet_k*mult_fleet[y] < 10:
+                                #     dict_fleet_k[t][this_f][y] = 0
+                                # else:
+                                #     dict_fleet_k[t][this_f][y] = this_fleet_k*mult_fleet[y]
+                                dict_fleet_k[t][this_f][y] = this_fleet_k*mult_fleet[y]
 
-                                                                
-                                                                                                
-        
                                                                                                                                                                                                         
                                 if y == 0 and dict_resi_cap_trn[t][this_f][0] != 0:
                                     dict_diffs_f_rf[this_f].update({t: this_fleet_k / dict_resi_cap_trn[t][this_f][0]})
@@ -8703,7 +8698,6 @@ def bulac_engine(base_inputs, dict_database, fut_id, this_hypercube, df_exp,
                     
                     dict_fuel_consump= dict_activities_out['Fuel Consumption']
                     dict_conv_fuel_cts= dict_activities_out['Conversion Fuel Constant']
-
                     dict_local_country[this_country].update({'Fleet': deepcopy(dict_fleet_k)})
                     dict_local_country[this_country].update({'New Fleet': deepcopy(dict_new_fleet_k)})
                     dict_local_country[this_country].update({'Fuel Consumption': deepcopy(dict_fuel_consump)})
@@ -8748,30 +8742,7 @@ def bulac_engine(base_inputs, dict_database, fut_id, this_hypercube, df_exp,
                 # ...let's store additional debugging variables per power plant (1):
                 dict_local_country[this_country].update({'Electricity production share (unplanned)': deepcopy(ele_prod_share)})
                 dict_local_country[this_country].update({'New energy assign': deepcopy(ele_endogenous)})
-                dict_local_country[this_country].update({'Accumulated new capacity': deepcopy(cap_accum)})
-                                                        
-                                                                                                                                
-                                    
-
-                                                    
-                                    
-                                        
-                                    
-                                    
-
-                
-                                
-
-                            
-                                                                                                                                
-                                                                                                                                                                
-                                                                                                                                                                
-                                                                                                                                                
-                                                                                                                                    
-                                                                                                                                                                    
-                    
-                                    
-                                                                
+                dict_local_country[this_country].update({'Accumulated new capacity': deepcopy(cap_accum)})                                                              
 
                 # ...let's store the "required energy" components:
                 dict_local_country[this_country].update({'Electricity demand to supply': deepcopy(electrical_demand_to_supply)})
@@ -9160,10 +9131,7 @@ def bulac_engine(base_inputs, dict_database, fut_id, this_hypercube, df_exp,
 
         # ...extract the exporting countries to LAC // assume *df_scen* is correct from previous loops
         df_scen_exports = filter_dataframe(df_scen, 'scenario_simple', scenario='% Exports for production', column='Parameter')
-
-                                                                            
-                                            
-                                                
+                       
                                                                         
         df_scen_exports_countries = \
             df_scen_exports['Application_Countries'].tolist()
@@ -9181,21 +9149,12 @@ def bulac_engine(base_inputs, dict_database, fut_id, this_hypercube, df_exp,
         # ...now we must extract all natural gas prices:
         df_ngas_prices = filter_dataframe(df_scen, 'two_columns_scenarios_special', scenario_2='Natural Gas',\
                             column='Parameter', column_2='Fuel')
-
-                                                                                                                
-                                                                    
-
                                                                             
         # ...now we must extract the quantitiy of natural gas exports to LAC!
         # In a loop, iterate across countries:
         for this_con in df_scen_exports_countries:
-            df_scen_exports_select = filter_dataframe(df_scen_exports, 'scenario_simple', scenario=this_con, column='Application_Countries')
-                                                                            
-                        
-                                                                                
-            
+            df_scen_exports_select = filter_dataframe(df_scen_exports, 'scenario_simple', scenario=this_con, column='Application_Countries')        
             df_scen_exports_select_pipe = filter_dataframe(df_scen_exports, 'scenario_simple', scenario=this_con, column='Parameter')
-
 
             exports_country = [0 for y in range(len(time_vector))]  # in PJ
             exports_country_pipe = [0 for y in range(len(time_vector))]
@@ -9546,7 +9505,7 @@ def bulac_engine(base_inputs, dict_database, fut_id, this_hypercube, df_exp,
                    'Unit variable OPEX', #4
                    'Operational life'] #5
 
-    list_outputs = [						
+    list_outputs = [
         'Fleet',  # 1
         'New Fleet',  # 2
         'Transport CAPEX [$]',  # 3
@@ -9562,23 +9521,20 @@ def bulac_engine(base_inputs, dict_database, fut_id, this_hypercube, df_exp,
         'Transport Tax IC [$]',  # 13
         'Transport Tax Otros_Gasoil [$]',  # 14
         'Transport Tax Tasa_Consular [$]',  # 15
-        'Transport Tax Rodaje [$]',  # 16										  
-        'Unit CAPEX',  # 17
-        'Unit Fixed OPEX',  # 18
-        'Unit Variable OPEX',  # 19
-        'Unit Tax Imports',  # 20
-        'Unit Tax IMESI_Venta',  # 21
-        'Unit Tax IVA_Venta',  # 22
-        'Unit Tax Patente',  # 23
-        'Unit Tax IMESI_Combust',  # 24
-        'Unit Tax IVA_Gasoil',  # 25
-        'Unit Tax IVA_Elec',  # 26
-        'Unit Tax IC',  # 27
-        'Unit Tax Otros_Gasoil',  # 28
-        'Unit Tax Tasa_Consular',  # 29
-        'Unit Tax Rodaje'  # 30	
-        # 'Fuel Consumption', # 31
-        # 'Conversion Fuel Constant', # 32															
+        'Transport Tax Rodaje [$]',  # 16
+        'Unit Tax Imports',  # 17
+        'Unit Tax IMESI_Venta',  # 18
+        'Unit Tax IVA_Venta',  # 19
+        'Unit Tax Patente',  # 20
+        'Unit Tax IMESI_Combust',  # 21
+        'Unit Tax IVA_Gasoil',  # 22
+        'Unit Tax IVA_Elec',  # 23
+        'Unit Tax IC',  # 24
+        'Unit Tax Otros_Gasoil',  # 25
+        'Unit Tax Tasa_Consular',  # 26
+        'Unit Tax Rodaje',  # 27
+        'Fuel Consumption', # 28
+        'Conversion Fuel Constant' # 29
     ]
 
     list_inputs_add = [i + ' (input)' for i in list_inputs]
@@ -9593,7 +9549,7 @@ def bulac_engine(base_inputs, dict_database, fut_id, this_hypercube, df_exp,
         list_fuel_clean += list(dict_eq_transport_fuels.keys())
     list_fuel_clean += ['']
 
-    output_lists = {f'h_o{i}': [] for i in range(1, 31)}
+    output_lists = {f'h_o{i}': [] for i in range(1, 30)}
     input_lists = {f'h_i{i}': [] for i in range(1, 6)}
     
     print('\n')
@@ -9603,10 +9559,6 @@ def bulac_engine(base_inputs, dict_database, fut_id, this_hypercube, df_exp,
         this_scen_case = cases_list[sc]
         for s in range(len(scenario_list)):
             this_scen = scenario_list[s]
-        
-            # regions_list = list(dict_regs_and_countries.keys())
-            # regions_list = ['4_The Amazon', '5_Southern Cone']
-            # regions_list = ['1_Mexico', '2_Central America', '4_The Amazon', '5_Southern Cone']
             regions_list = ['1_Mexico', '2_Central America', '3_Caribbean', '4_The Amazon', '5_Southern Cone']
         
             for r in range(len(regions_list)):
@@ -9673,10 +9625,10 @@ def bulac_engine(base_inputs, dict_database, fut_id, this_hypercube, df_exp,
                                 # Lists of IDs for case conditions
                                 list_output_01 = []
                                 list_output_10 = []
-                                list_output_00 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30]
+                                list_output_00 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29]
                                 list_output_11 = []
                                 
-                                for output_id in range(1, 31):  # Loop for all outputs, the second number y one more than the last output
+                                for output_id in range(1, 30):  # Loop for all outputs, the second number y one more than the last output
         
                                     # Conditions to select the correct case condition for combination of "fuel" and "tech"                        
                                     if output_id in list_output_01:
@@ -9710,13 +9662,20 @@ def bulac_engine(base_inputs, dict_database, fut_id, this_hypercube, df_exp,
                                     #     scd_key = fuel
                                     #     thd_key = y
                                     #     fth_key = None
-                                    if output_id in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30]:
+                                    if output_id in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28]:
                                         # Case 'four' 1
                                         case_type = 'four'
                                         fst_key = list_outputs[output_id - 1]
                                         scd_key = tech
                                         thd_key = fuel
                                         fth_key = y
+                                    elif output_id in [29]:
+                                        # Case 'two'
+                                        case_type = 'three'
+                                        fst_key = list_outputs[output_id - 1]
+                                        scd_key = tech
+                                        thd_key = fuel
+                                        fth_key = None
                                     # elif output_id == 14:
                                     #     # Case 'four' 2
                                     #     case_type = 'four'
@@ -9728,11 +9687,11 @@ def bulac_engine(base_inputs, dict_database, fut_id, this_hypercube, df_exp,
                                     # Process outputs                            
                                     count_empties, output_lists[f'h_o{output_id}'] = handle_processes(count_empties, output_lists[f'h_o{output_id}'], this_data_dict, fuel, tech, case_condition, case_type, fst_key, scd_key, thd_key, fth_key)
                                                             
-                                if count_empties == 35:  # gotta pop, because it is an empty row:
+                                if count_empties == 34:  # gotta pop, because it is an empty row:
                                     # Inputs
                                     input_lists = pop_last_from_inputs(input_lists, range(1, 6))
                                     # Outputs
-                                    output_lists = pop_last_from_outputs(output_lists, range(1, 31))
+                                    output_lists = pop_last_from_outputs(output_lists, range(1, 30))
         
                                 else:
                                     h_scenario.append(this_scen_case)
@@ -9749,7 +9708,7 @@ def bulac_engine(base_inputs, dict_database, fut_id, this_hypercube, df_exp,
     
     variable_names = \
         [f'h_i{i}' for i in range(1, 6)] + \
-        [f'h_o{i}' for i in range(1, 31)]
+        [f'h_o{i}' for i in range(1, 30)]
     
     # Construct list_variables by accessing dictionaries
     list_inputs_variables = [input_lists[var_name] for var_name in variable_names if var_name in input_lists]
@@ -9810,59 +9769,3 @@ def bulac_engine(base_inputs, dict_database, fut_id, this_hypercube, df_exp,
     df_output['Future'] = fut_id
     path_output = os.path.join(path,df_output_name)
     df_output.to_csv(path_output, index=None, header=True)
-    
-    # list_inner = list_dimensions + [
-    #                     'Emissions by demand (output)',
-    #                     'Emissions in electricity (output)',
-    #                     'Energy demand by sector (output)',
-    #                     'Energy demand by fuel (output)',
-    #                     'Energy intensity by sector (output)',
-    #                     'Global warming externalities by demand (output)',
-    #                     'Global warming externalities in electricity (output)',
-    #                     'Local pollution externalities by demand (output)',
-    #                     'Local pollution externalities in electricity (output)',
-    #                     'Global warming externalities in electricity (disc) (output)',
-    #                     'Local pollution externalities in electricity (disc) (output)',
-    #                     'Fleet (output)',
-    #                     'New Fleet (output)',
-    #                     'Transport CAPEX [$] (output)',
-    #                     'Transport Fixed OPEX [$] (output)',
-    #                     'Transport Variable OPEX [$] (output)',
-    #                     'Transport Tax Imports [$] (output)',
-    #                     'Transport Tax IMESI_Venta [$] (output)',
-    #                     'Transport Tax IVA_Venta [$] (output)',
-    #                     'Transport Tax Patente [$] (output)',
-    #                     'Transport Tax IMESI_Combust [$] (output)',
-    #                     'Transport Tax IVA_Gasoil [$] (output)',
-    #                     'Transport Tax IVA_Elec [$] (output)',
-    #                     'Transport Tax IC [$] (output)',
-    #                     'Transport Tax Otros_Gasoil [$] (output)',
-    #                     'Transport Tax Tasa_Consular [$] (output)',
-    #                     'Transport Tax Rodaje [$] (output)',
-    #                     'Future']    
-
-    # list_inner = list_dimensions + [
-    #                     'Fleet (output)',
-    #                     'New Fleet (output)',
-    #                     'Transport CAPEX [$] (output)',
-    #                     'Transport Fixed OPEX [$] (output)',
-    #                     'Transport Variable OPEX [$] (output)',
-    #                     'Transport Tax Imports [$] (output)',
-    #                     'Transport Tax IMESI_Venta [$] (output)',
-    #                     'Transport Tax IVA_Venta [$] (output)',
-    #                     'Transport Tax Patente [$] (output)',
-    #                     'Transport Tax IMESI_Combust [$] (output)',
-    #                     'Transport Tax IVA_Gasoil [$] (output)',
-    #                     'Transport Tax IVA_Elec [$] (output)',
-    #                     'Transport Tax IC [$] (output)',
-    #                     'Transport Tax Otros_Gasoil [$] (output)',
-    #                     'Transport Tax Tasa_Consular [$] (output)',
-    #                     'Transport Tax Rodaje [$] (output)',
-    #                     'Future']
-    
-    # df_output_name = 'model_BULAC_simulation_' + str(fut_id) + '.csv'
-    # df_output = pd.DataFrame.from_dict(dict_output)
-    # df_output['Future'] = int(fut_id)
-    # df_output_end = df_output[list_inner]
-    # path_output = os.path.join(path,df_output_name)
-    # df_output_end.to_csv(path_output, index=None, header=True)
