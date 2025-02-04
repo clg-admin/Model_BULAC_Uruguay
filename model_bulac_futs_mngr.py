@@ -39,10 +39,10 @@ warnings.filterwarnings('ignore', category=FutureWarning)
 if __name__ == '__main__':
 
     # Call the information for experimentation:
-    di_nam = 'data_inputs_20250130.xlsx'
+    di_nam = 'data_inputs.xlsx'
       
     start_1 = time.time()
-    
+
     ###############################################################################
     # Read config files
     # Read the tier 2 config file   
@@ -78,7 +78,7 @@ if __name__ == '__main__':
 
     # Scenarios sheets:
     df3_scen = pd.read_excel(di_nam, sheet_name="12_scen")
-    df3_scen_matrix = pd.read_excel(di_nam, sheet_name="12.2_scen_matrix")
+    # df3_scen_matrix = pd.read_excel(di_nam, sheet_name="12.2_scen_matrix")
     df3_scen_dems = pd.read_excel(di_nam, sheet_name="13_scen_dems")
     df3_tpt_data = pd.read_excel(di_nam, sheet_name="14_trans_data")
     # df3_agr_data = pd.read_excel(di_nam, sheet_name="15_agro_data")
@@ -118,7 +118,7 @@ if __name__ == '__main__':
         # df2_agr_sets_eq,
         # df2_res_sets_eq,
         df3_scen,
-        df3_scen_matrix,
+        # df3_scen_matrix,
         df3_scen_dems, 
         df3_tpt_data,
         # df3_agr_data,

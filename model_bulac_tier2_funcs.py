@@ -781,6 +781,43 @@ def read_factors(xls_path, sheet_name, factor_column_name):
     return factors_by_tax, factors_by_fuel
 
 
+def read_factors_simple(xls_path, sheet_name, factor_column_name):
+    """
+    Reads adjustment factors from an Excel sheet and structures them into a dictionary based on their applicability to specific taxes.
+    This function simplifies the process of accessing factors for specific calculations in tax scenarios.
+
+    Args:
+        xls_path (str): The file path for the Excel workbook.
+        sheet_name (str): The name of the sheet within the workbook from which to read the factors.
+        factor_column_name (str): The name of the column containing the factors.
+
+    Returns:
+        dict: A dictionary where each key is a tax name, and the value is the factor applicable directly to that tax.
+
+    Raises:
+        FileNotFoundError: If the Excel file at the specified path does not exist.
+        ValueError: If the Excel file is incorrectly formatted or missing necessary columns ('TAX' and the specified factor column).
+    """
+    # Read the Excel file
+    df = pd.read_excel(xls_path, sheet_name=sheet_name)
+
+    # Initialize the dictionary to store factors by tax
+    factors_by_tax = {}
+
+    # Iterate through each row in the DataFrame
+    for idx, row in df.iterrows():
+        tax = row['TAX']
+        factor = row[factor_column_name]
+
+        # Handle percentage strings if present
+        if isinstance(factor, str) and '%' in factor:
+            factor = float(factor.replace('%', '')) / 100
+
+        # Store the factor in the dictionary
+        factors_by_tax[tax] = factor
+
+    return factors_by_tax, None
+
 def verify_factors(factors_by_fuel):
     """
     Verifies the consistency of tax, technology, and fuel factors within the provided structure to ensure that they sum to approximately 1,
@@ -1114,7 +1151,7 @@ def changes_tax_keys_unit_taxes_dict(unit_taxes):
     return unit_taxes
 
 
-def take_factors_distribution(sheet_name, column_name, excel_name, scenario_list, regions_list, country_list):
+def take_factors_distribution(sheet_name, column_name, excel_name, scenario_list, regions_list, country_list, flag_by_factores_fuel):
     """
     Constructs a nested dictionary of factors by fuel and tax from an Excel file for specified scenarios, regions, and countries, 
     excluding the 'BAU' (Business As Usual) scenario. This setup facilitates easy access to factor data for various geographical 
@@ -1133,16 +1170,21 @@ def take_factors_distribution(sheet_name, column_name, excel_name, scenario_list
             factors_by_fuel (dict): A deeply nested dictionary structured by scenario, region, and country,
                                     where each entry contains the factor data relevant to that specific classification.
     """
-    # Read the factors from the Excel file
-    factors_by_tax, factors_by_fuel = read_factors(excel_name, sheet_name, column_name)
-
-    # Construct the factors by fuel configuration for each scenario, region, and country
-    factors_by_fuel = {
-        scen: {
-            region: {
-                country: factors_by_fuel for country in country_list
-            } for region in regions_list
-        } for scen in scenario_list if scen != 'BAU'
-    }
+    
+    if flag_by_factores_fuel:
+        # Read the factors from the Excel file
+        factors_by_tax, factors_by_fuel = read_factors(excel_name, sheet_name, column_name)
+    
+        # Construct the factors by fuel configuration for each scenario, region, and country
+        factors_by_fuel = {
+            scen: {
+                region: {
+                    country: factors_by_fuel for country in country_list
+                } for region in regions_list
+            } for scen in scenario_list if scen != 'BAU'
+        }
+    else:
+        # Read the factors from the Excel file
+        factors_by_tax, factors_by_fuel = read_factors_simple(excel_name, sheet_name, column_name)
 
     return factors_by_tax, factors_by_fuel

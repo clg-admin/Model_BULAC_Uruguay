@@ -4424,9 +4424,9 @@ def bulac_engine(base_inputs, dict_database, fut_id, this_hypercube, df_exp,
     
     # Scenarios sheets:
     df3_scen = base_inputs[8]
-    df3_scen_matrix = base_inputs[9]  # viene de Relac
-    df3_scen_dems = base_inputs[10]
-    df3_tpt_data = base_inputs[11]
+    # df3_scen_matrix = base_inputs[9]  # viene de Relac
+    df3_scen_dems = base_inputs[9]
+    df3_tpt_data = base_inputs[10]
     # df3_agr_data = base_inputs[14]
     # df3_res_data = base_inputs[15]
                                    
@@ -4435,21 +4435,21 @@ def bulac_engine(base_inputs, dict_database, fut_id, this_hypercube, df_exp,
     # df4_rac_data = base_inputs[16]  # nueva!
     # df4_ef_agro_res = base_inputs[17]
     # df4_ar_emi = base_inputs[18]  # nueva!
-    df4_cfs = base_inputs[12]
-    df4_ef = base_inputs[13]
+    df4_cfs = base_inputs[11]
+    df4_ef = base_inputs[12]
     # df4_rac_emi = base_inputs[21]  # nueva!
-    df4_job_fac = base_inputs[14]
-    df4_tran_dist_fac = base_inputs[15]
-    df4_caps_rest = base_inputs[16]
+    df4_job_fac = base_inputs[13]
+    df4_tran_dist_fac = base_inputs[14]
+    df4_caps_rest = base_inputs[15]
     
     # Economic sheets:
-    df5_ext = base_inputs[17]
+    df5_ext = base_inputs[16]
     # d5_res = base_inputs[26]
-    d5_power_techs = base_inputs[18]
-    d5_tpt = base_inputs[19]
+    d5_power_techs = base_inputs[17]
+    d5_tpt = base_inputs[18]
     # d5_agr = base_inputs[29]
     # d5_rac = base_inputs[30]  # nueva!
-    d5_tax = base_inputs[20]
+    d5_tax = base_inputs[19]
     
     # Unpack config dicts
     params_tier2 = params_dict['params_tier2']
@@ -4812,9 +4812,9 @@ def bulac_engine(base_inputs, dict_database, fut_id, this_hypercube, df_exp,
                 df_scen_3_spec = df_scen_3.iloc[indices_df_scen_select]
                 df_scen_3_spec.reset_index(drop=True, inplace=True)  # this should be ready to use
     
-                df_scen_3_2 = filter_dataframe(df3_scen_matrix, 'three_columns_scenarios_2', \
-                                            scenario=this_scen, scenario_2='ALL', scenario_3=this_country, \
-                                            column='Scenario', column_2='Scenario', column_3='Country') 
+                # df_scen_3_2 = filter_dataframe(df3_scen_matrix, 'three_columns_scenarios_2', \
+                #                             scenario=this_scen, scenario_2='ALL', scenario_3=this_country, \
+                #                             column='Scenario', column_2='Scenario', column_3='Country') 
     
                 # We may add other fuels that are not present in the original list fuel
                 list_fuel_additional = [v for v in list(set(df_param_related_3['Fuel'].tolist())) if v not in list_fuel]
@@ -5123,125 +5123,125 @@ def bulac_engine(base_inputs, dict_database, fut_id, this_hypercube, df_exp,
                 if not df_param_related_15.empty:
                     list_h2_effic = list(df_param_related_15[time_vector].iloc[0])
                 
-                # Here we can modify the demand based on end-use assumptions:
-                if len(df_scen_3_2.index.tolist()) > 0:
-                    print('Here we are modifying the demands according to "df_scen_3_2".')
+                # # Here we can modify the demand based on end-use assumptions:
+                # if len(df_scen_3_2.index.tolist()) > 0:
+                #     print('Here we are modifying the demands according to "df_scen_3_2".')
                     
-                    # Iterate across each applicable modification
-                    for m in range(len(df_scen_3_2.index.tolist())):
-                        df32_rule = df_scen_3_2["Rule"].iloc[m]
-                        df32_sh_cat = df_scen_3_2["Category"].iloc[m]
+                #     # Iterate across each applicable modification
+                #     for m in range(len(df_scen_3_2.index.tolist())):
+                #         df32_rule = df_scen_3_2["Rule"].iloc[m]
+                #         df32_sh_cat = df_scen_3_2["Category"].iloc[m]
                         
                         
-                        df32_sh_subcat_str = str(df_scen_3_2["Share for subcategory"].iloc[m]).split(' ; ')
-                        df32_sh_subcat = [float(x) if isinstance(x, str) else x for x in df32_sh_subcat_str]
+                #         df32_sh_subcat_str = str(df_scen_3_2["Share for subcategory"].iloc[m]).split(' ; ')
+                #         df32_sh_subcat = [float(x) if isinstance(x, str) else x for x in df32_sh_subcat_str]
                         
-                        df32_substituted = df_scen_3_2["Substituted vector"].iloc[m]
-                        df32_substitute = df_scen_3_2["Substitute vector"].iloc[m]
+                #         df32_substituted = df_scen_3_2["Substituted vector"].iloc[m]
+                #         df32_substitute = df_scen_3_2["Substitute vector"].iloc[m]
                         
-                        df32_depu_str = str(df_scen_3_2["Displaced energy per unit [MJ/unit]"].iloc[m]).split(" ; ")
-                        df32_depu = [float(x) if isinstance(x, str) else x for x in df32_depu_str]
+                #         df32_depu_str = str(df_scen_3_2["Displaced energy per unit [MJ/unit]"].iloc[m]).split(" ; ")
+                #         df32_depu = [float(x) if isinstance(x, str) else x for x in df32_depu_str]
                         
-                        df32_nerpu = df_scen_3_2["New energy requirement per unit [MJ/unit]"].iloc[m]
+                #         df32_nerpu = df_scen_3_2["New energy requirement per unit [MJ/unit]"].iloc[m]
                         
-                        df32_numunits_str = str(df_scen_3_2["Number of units"].iloc[m]).split(" ; ")
-                        df32_numunits = [float(x) if isinstance(x, str) else x for x in df32_numunits_str]
+                #         df32_numunits_str = str(df_scen_3_2["Number of units"].iloc[m]).split(" ; ")
+                #         df32_numunits = [float(x) if isinstance(x, str) else x for x in df32_numunits_str]
                         
-                        df32_units = df_scen_3_2["Units"].iloc[m]
-                        df32_target_year_str = str(df_scen_3_2["Target years"].iloc[m])
+                #         df32_units = df_scen_3_2["Units"].iloc[m]
+                #         df32_target_year_str = str(df_scen_3_2["Target years"].iloc[m])
                         
-                        df32_ndby = df_scen_3_2["Displacement base year"].iloc[m]
-                        df32_dvbfty = df_scen_3_2["Displaced value before first target year"].iloc[m]
-                        df32_dvbetty = df_scen_3_2["Displaced value between target years"].iloc[m]
-                        df32_dvty = df_scen_3_2["Displaced value in target years"].iloc[m]
-                        df32_dvalty = df_scen_3_2["Displaced value after last target year"].iloc[m]
+                #         df32_ndby = df_scen_3_2["Displacement base year"].iloc[m]
+                #         df32_dvbfty = df_scen_3_2["Displaced value before first target year"].iloc[m]
+                #         df32_dvbetty = df_scen_3_2["Displaced value between target years"].iloc[m]
+                #         df32_dvty = df_scen_3_2["Displaced value in target years"].iloc[m]
+                #         df32_dvalty = df_scen_3_2["Displaced value after last target year"].iloc[m]
                         
-                        df32_nrby = df_scen_3_2["New requirement base year"].iloc[m]
-                        df32_nrvbfty = df_scen_3_2["New requirement value before first target year"].iloc[m]
-                        df32_nrbetty = df_scen_3_2["New requirement value between target years"].iloc[m]
-                        df32_nrty = df_scen_3_2["New requirement value in target years"].iloc[m]
-                        df32_nralty = df_scen_3_2["New requirement value after last target year"].iloc[m]
+                #         df32_nrby = df_scen_3_2["New requirement base year"].iloc[m]
+                #         df32_nrvbfty = df_scen_3_2["New requirement value before first target year"].iloc[m]
+                #         df32_nrbetty = df_scen_3_2["New requirement value between target years"].iloc[m]
+                #         df32_nrty = df_scen_3_2["New requirement value in target years"].iloc[m]
+                #         df32_nralty = df_scen_3_2["New requirement value after last target year"].iloc[m]
     
-                        add_vector_general =  [0] * len(time_vector)
+                #         add_vector_general =  [0] * len(time_vector)
     
-                        if df32_rule == "Substitute energy per unit":
-                            avector_counter = 0
-                            df32_dvty_list_str = str(df32_dvty).split(' ; ')
-                            df32_dvty_list = [float(x) if isinstance(x, str) else x for x in df32_dvty_list_str]
+                #         if df32_rule == "Substitute energy per unit":
+                #             avector_counter = 0
+                #             df32_dvty_list_str = str(df32_dvty).split(' ; ')
+                #             df32_dvty_list = [float(x) if isinstance(x, str) else x for x in df32_dvty_list_str]
                             
-                            for avector in df32_substituted.split(' ; '):
+                #             for avector in df32_substituted.split(' ; '):
     
-                                base_disp_vector, base_disp_vector_agg, subtract_vector, loc_depu = process_vectors(avector, dict_energy_demand, df32_sh_cat, dict_energy_demand_by_fuel, time_vector, df32_depu, avector_counter)
+                #                 base_disp_vector, base_disp_vector_agg, subtract_vector, loc_depu = process_vectors(avector, dict_energy_demand, df32_sh_cat, dict_energy_demand_by_fuel, time_vector, df32_depu, avector_counter)
     
-                                if df32_substitute != 'none':
-                                    base_newreq_vector = deepcopy(dict_energy_demand[df32_sh_cat][df32_substitute])
-                                    base_newreq_vector_agg = deepcopy(dict_energy_demand_by_fuel[df32_substitute])
+                #                 if df32_substitute != 'none':
+                #                     base_newreq_vector = deepcopy(dict_energy_demand[df32_sh_cat][df32_substitute])
+                #                     base_newreq_vector_agg = deepcopy(dict_energy_demand_by_fuel[df32_substitute])
                                                           
-                                '''
-                                Multiple target years can be defined in this step:
-                                we will work only with one target year
-                                '''
-                                by_idx, ty_list_str, ty_list, ty_index_list = process_target_years(time_vector, df32_ndby, df32_target_year_str, df32_dvty_list, base_disp_vector, 'first', subtract_vector)
+                #                 '''
+                #                 Multiple target years can be defined in this step:
+                #                 we will work only with one target year
+                #                 '''
+                #                 by_idx, ty_list_str, ty_list, ty_index_list = process_target_years(time_vector, df32_ndby, df32_target_year_str, df32_dvty_list, base_disp_vector, 'first', subtract_vector)
     
-                                # Here we fill the subtract vector with all the required targets
-                                fill_subtract_vector(time_vector, by_idx, ty_list, ty_index_list, df32_dvbfty, df32_dvbetty, df32_nralty, subtract_vector)
-                                avector_counter += 1
+                #                 # Here we fill the subtract vector with all the required targets
+                #                 fill_subtract_vector(time_vector, by_idx, ty_list, ty_index_list, df32_dvbfty, df32_dvbetty, df32_nralty, subtract_vector)
+                #                 avector_counter += 1
     
-                                # After having obtained the subtract vector, we need an add vector using the substitution ratios:
-                                add_vector_general, add_vector_local = create_add_vectors(avector, df32_nerpu, loc_depu, subtract_vector, add_vector_general, 'first')
-                                changed_disp_vector, change_disp_vector_agg = update_disp_vectors(base_disp_vector, base_disp_vector_agg, subtract_vector)
-                                update_energy_demand_dicts(df32_substituted, df32_substitute, df32_sh_cat, avector, changed_disp_vector, change_disp_vector_agg, dict_energy_demand, dict_energy_demand_by_fuel, 'first')
+                #                 # After having obtained the subtract vector, we need an add vector using the substitution ratios:
+                #                 add_vector_general, add_vector_local = create_add_vectors(avector, df32_nerpu, loc_depu, subtract_vector, add_vector_general, 'first')
+                #                 changed_disp_vector, change_disp_vector_agg = update_disp_vectors(base_disp_vector, base_disp_vector_agg, subtract_vector)
+                #                 update_energy_demand_dicts(df32_substituted, df32_substitute, df32_sh_cat, avector, changed_disp_vector, change_disp_vector_agg, dict_energy_demand, dict_energy_demand_by_fuel, 'first')
     
-                                # Change the vector that needed more energy, just locally:
-                                changed_newreq_vector = [a + b for a, b in zip(base_newreq_vector, add_vector_local)]
-                                # Update the corresponding dictionary:
-                                if df32_substitute != 'none':
-                                    dict_energy_demand[df32_sh_cat][df32_substitute] = deepcopy(changed_newreq_vector)
+                #                 # Change the vector that needed more energy, just locally:
+                #                 changed_newreq_vector = [a + b for a, b in zip(base_newreq_vector, add_vector_local)]
+                #                 # Update the corresponding dictionary:
+                #                 if df32_substitute != 'none':
+                #                     dict_energy_demand[df32_sh_cat][df32_substitute] = deepcopy(changed_newreq_vector)
     
-                            # Change the vector that needed more energy, just in aggregate:
-                            change_newreq_vector_agg = [a + b for a, b in zip(base_newreq_vector_agg, add_vector_general)]
-                            # Update the corresponding dictionary:
-                            if df32_substitute != 'none':
-                                dict_energy_demand_by_fuel[df32_substitute] = deepcopy(change_newreq_vector_agg)
+                #             # Change the vector that needed more energy, just in aggregate:
+                #             change_newreq_vector_agg = [a + b for a, b in zip(base_newreq_vector_agg, add_vector_general)]
+                #             # Update the corresponding dictionary:
+                #             if df32_substitute != 'none':
+                #                 dict_energy_demand_by_fuel[df32_substitute] = deepcopy(change_newreq_vector_agg)
     
     
-                        if df32_rule == "Substitute energy share" and not df_param_related_15.empty:
-                            avector_counter = 0
-                            for avector in df32_substituted.split(' ; '):
-                                base_disp_vector = deepcopy(dict_energy_demand[df32_sh_cat][avector])
-                                base_disp_vector_agg = deepcopy(dict_energy_demand_by_fuel[avector])
+                #         if df32_rule == "Substitute energy share" and not df_param_related_15.empty:
+                #             avector_counter = 0
+                #             for avector in df32_substituted.split(' ; '):
+                #                 base_disp_vector = deepcopy(dict_energy_demand[df32_sh_cat][avector])
+                #                 base_disp_vector_agg = deepcopy(dict_energy_demand_by_fuel[avector])
     
-                                base_newreq_vector, base_newreq_vector_agg, subtract_vector, loc_depu, df32_substitute_orig = process_vectors(df32_substitute, dict_energy_demand, df32_sh_cat, dict_energy_demand_by_fuel, time_vector, df32_depu, avector_counter, 'second')                            
-                                sh_subcat = df32_sh_subcat[avector_counter]
+                #                 base_newreq_vector, base_newreq_vector_agg, subtract_vector, loc_depu, df32_substitute_orig = process_vectors(df32_substitute, dict_energy_demand, df32_sh_cat, dict_energy_demand_by_fuel, time_vector, df32_depu, avector_counter, 'second')                            
+                #                 sh_subcat = df32_sh_subcat[avector_counter]
                                                           
-                                '''
-                                Multiple target years can be defined in this step:
-                                we will work only with one target year
-                                '''
-                                by_idx, ty_list_str, ty_list, ty_index_list, tval = process_target_years(time_vector, df32_ndby, df32_target_year_str, df32_numunits, base_disp_vector, 'second', subtract_vector, sh_subcat)
+                #                 '''
+                #                 Multiple target years can be defined in this step:
+                #                 we will work only with one target year
+                #                 '''
+                #                 by_idx, ty_list_str, ty_list, ty_index_list, tval = process_target_years(time_vector, df32_ndby, df32_target_year_str, df32_numunits, base_disp_vector, 'second', subtract_vector, sh_subcat)
     
-                                # Here we fill the subtract vector with all the required targets
-                                fill_subtract_vector(time_vector, by_idx, ty_list, ty_index_list, df32_dvbfty, df32_dvbetty, df32_nralty, subtract_vector)
-                                avector_counter += 1
+                #                 # Here we fill the subtract vector with all the required targets
+                #                 fill_subtract_vector(time_vector, by_idx, ty_list, ty_index_list, df32_dvbfty, df32_dvbetty, df32_nralty, subtract_vector)
+                #                 avector_counter += 1
     
-                                # After having obtained the subtract vector, we need an add vector using the substitution ratios:
-                                add_vector_general, add_vector_local = create_add_vectors(avector, df32_nerpu, loc_depu, subtract_vector, add_vector_general, 'second', df32_substitute_orig=df32_substitute_orig, list_h2_effic=list_h2_effic)
-                                changed_disp_vector, change_disp_vector_agg = update_disp_vectors(base_disp_vector, base_disp_vector_agg, subtract_vector)
-                                update_energy_demand_dicts(df32_substituted, df32_substitute, df32_sh_cat, avector, changed_disp_vector, change_disp_vector_agg, dict_energy_demand, dict_energy_demand_by_fuel, 'second')                            
+                #                 # After having obtained the subtract vector, we need an add vector using the substitution ratios:
+                #                 add_vector_general, add_vector_local = create_add_vectors(avector, df32_nerpu, loc_depu, subtract_vector, add_vector_general, 'second', df32_substitute_orig=df32_substitute_orig, list_h2_effic=list_h2_effic)
+                #                 changed_disp_vector, change_disp_vector_agg = update_disp_vectors(base_disp_vector, base_disp_vector_agg, subtract_vector)
+                #                 update_energy_demand_dicts(df32_substituted, df32_substitute, df32_sh_cat, avector, changed_disp_vector, change_disp_vector_agg, dict_energy_demand, dict_energy_demand_by_fuel, 'second')                            
     
-                                # Change the vector that needed more energy, just locally:
-                                changed_newreq_vector = [a + b for a, b in zip(base_newreq_vector, add_vector_local)]
-                                # Update the corresponding dictionary:
-                                if df32_substitute != 'none':
-                                    dict_energy_demand[df32_sh_cat][df32_substitute] = deepcopy(changed_newreq_vector)
+                #                 # Change the vector that needed more energy, just locally:
+                #                 changed_newreq_vector = [a + b for a, b in zip(base_newreq_vector, add_vector_local)]
+                #                 # Update the corresponding dictionary:
+                #                 if df32_substitute != 'none':
+                #                     dict_energy_demand[df32_sh_cat][df32_substitute] = deepcopy(changed_newreq_vector)
     
-                            # Change the vector that needed more energy, just in aggregate:
-                            change_newreq_vector_agg = [a + b for a, b in zip(base_newreq_vector_agg, add_vector_general)]
-                            # Update the corresponding dictionary:
-                            if df32_substitute != 'none':
-                                dict_energy_demand_by_fuel[df32_substitute] = deepcopy(change_newreq_vector_agg)
+                #             # Change the vector that needed more energy, just in aggregate:
+                #             change_newreq_vector_agg = [a + b for a, b in zip(base_newreq_vector_agg, add_vector_general)]
+                #             # Update the corresponding dictionary:
+                #             if df32_substitute != 'none':
+                #                 dict_energy_demand_by_fuel[df32_substitute] = deepcopy(change_newreq_vector_agg)
     
-                    print('        > The modifications are complete!')
+                #     print('        > The modifications are complete!')
     
                 # Here we can modify the demand from the endogenous calculation if the electrical demand needs an override           
                 df_param_related_13 = filter_dataframe(df_scen_rc, 'scenario_simple', scenario='Fixed electricity production', column='Parameter')

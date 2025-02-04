@@ -218,10 +218,9 @@ def run_model(dict_tier2_package):
                                     take_factors_distribution(sheet_name,
                                                           columns_factors[col_i],
                                                           taxes_excel, scenario_list,
-                                                          regions_list, country_list)
+                                                          regions_list, country_list,
+                                                          params_tier2['by_factores_fuel'])
 
-                        
-                    
                                 if adjust_id != scenarios_cases_list[0] and adjust_id not in tax_params and adjust_id == 'factors_by_activity' and params_tier2['by_activity']:
                                     # Call the function to calculate unit taxes using predefined factors, 
                                     # fiscal gaps and make distribution according activity
