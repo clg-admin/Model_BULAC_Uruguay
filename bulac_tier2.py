@@ -14,6 +14,7 @@ Suggested citation: UNEP (2022). Is Natural Gas a Good Investment for Latin
 import pandas as pd
 from copy import deepcopy
 import sys
+import re
 
 # Import functions that support Tier 2 of this model:
 from model_bulac_tier2_funcs import calculate_tax_differences, \
@@ -220,6 +221,9 @@ def run_model(dict_tier2_package):
                                                           taxes_excel, scenario_list,
                                                           regions_list, country_list,
                                                           params_tier2['by_factores_fuel'])
+                                print(len(columns_factors))
+                                print(columns_factors)
+                                sys.exit()
 
                                 if adjust_id != scenarios_cases_list[0] and adjust_id not in tax_params and adjust_id == 'factors_by_activity' and params_tier2['by_activity']:
                                     # Call the function to calculate unit taxes using predefined factors, 
@@ -237,13 +241,16 @@ def run_model(dict_tier2_package):
                                         dict_mult_depr=dict_mult_depr,
                                         base_dict_scen=base_dict_scen
                                     )
+                                    # Extract the complete number after underscore
+                                    factor_number = re.search(r'\d+$', columns_factors[col_i]).group()
+                                    
                                     # Include unit taxes of the BAU scenario
                                     unit_taxes_activity_by_factor.update(unit_taxes_bau)
                                     unit_taxes_activity_by_factor = changes_tax_keys_unit_taxes_dict(deepcopy(unit_taxes_activity_by_factor))
-                                    filtered_dict_scen[f'{adjust_id}_{columns_factors[col_i][-1]}']= deepcopy(unit_taxes_activity_by_factor)
+                                    filtered_dict_scen[f'{adjust_id}_{factor_number}']= deepcopy(unit_taxes_activity_by_factor)
                                     unit_taxes_activity_by_factor_percentage.update(unit_taxes_bau_percentage)
                                     unit_taxes_activity_by_factor_percentage = changes_tax_keys_unit_taxes_dict(deepcopy(unit_taxes_activity_by_factor_percentage))
-                                    filtered_dict_scen_percentage[f'{adjust_id}_{columns_factors[col_i][-1]}']= deepcopy(unit_taxes_activity_by_factor_percentage)
+                                    filtered_dict_scen_percentage[f'{adjust_id}_{factor_number}']= deepcopy(unit_taxes_activity_by_factor_percentage)
                             
                                 elif adjust_id != scenarios_cases_list[0] and adjust_id not in tax_params and adjust_id == 'factors' and params_tier2['by_factores_fuel']:
                                     # Call the function to calculate unit taxes using predefined factors for 
@@ -262,15 +269,16 @@ def run_model(dict_tier2_package):
                                         dict_mult_depr=dict_mult_depr,
                                         base_dict_scen=base_dict_scen
                                     )
-                                    
+                                    # Extract the complete number after underscore
+                                    factor_number = re.search(r'\d+$', columns_factors[col_i]).group()
 
                                     # Include unit taxes of the BAU scenario
                                     unit_taxes_by_factor.update(unit_taxes_bau)
                                     unit_taxes_by_factor = changes_tax_keys_unit_taxes_dict(deepcopy(unit_taxes_by_factor))
-                                    filtered_dict_scen[f'{adjust_id}_{columns_factors[col_i][-1]}']= deepcopy(unit_taxes_by_factor)
+                                    filtered_dict_scen[f'{adjust_id}_{factor_number}']= deepcopy(unit_taxes_by_factor)
                                     unit_taxes_by_factor_percentage.update(unit_taxes_bau_percentage)
                                     unit_taxes_by_factor_percentage = changes_tax_keys_unit_taxes_dict(deepcopy(unit_taxes_by_factor_percentage))
-                                    filtered_dict_scen_percentage[f'{adjust_id}_{columns_factors[col_i][-1]}']= deepcopy(unit_taxes_by_factor_percentage)
+                                    filtered_dict_scen_percentage[f'{adjust_id}_{factor_number}']= deepcopy(unit_taxes_by_factor_percentage)
     
     
     # Update dict_scen with filtered data by scenario/case
