@@ -254,7 +254,7 @@ if __name__ == '__main__':
             #
             end2 = time.time()   
             time_elapsed2 = -start2 + end2
-            print('Cycle: ' + str(n) + '/' + str(y_ceil) + ' | ' + 
+            print('Cycle: ' + str(n+1) + '/' + str(y_ceil) + ' | ' + 
                 str(time_elapsed2) + ' seconds' )
     
     # Gather the list of output csvs:

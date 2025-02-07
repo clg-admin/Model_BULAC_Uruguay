@@ -30,7 +30,7 @@ from model_bulac_funcs import intersection_2, interpolation_to_end, \
     compute_delta_for_technology, discounted_values
  
 # Import Tier 2 of this model:
-import bulac_tier2    
+import model_bulac_tier2    
 
 from model_bulac_lhs import generate_lhs_data  
 
@@ -3924,9 +3924,30 @@ for s in range(len(scenario_list)):
                            (df['Application_Countries'].isin(['All', country])) & \
                            (df['Parameter'] == parameter)
                     return df.loc[mask][year_column].sum()
+
+                # Function #25.2
+                def get_data_2(df, trn_type, country, parameter, year_column):
+                    """
+                    Extract specific data from a DataFrame based on given conditions.
+                    
+                    Args:
+                    - df (DataFrame): The DataFrame containing transportation data.
+                    - trn_type (str): The type of transportation.
+                    - country (str): Target country for data extraction.
+                    - parameter (str): The parameter to filter data by (e.g., 'Residual fleet', 'Distance', 'Load Factor').
+                    - year_column (str): The column name representing years.
+                    
+                    Returns:
+                    - (float): Sum of the data values from the DataFrame that meet the specified conditions.
+                    """
+
+                    mask = (df['Type'] == trn_type) & \
+                           (df['Application_Countries'].isin(['All', country])) & \
+                           (df['Parameter'] == parameter)
+                    return df.loc[mask][year_column]
                 
                 # Function #26
-                def update_dictionaries(transport_set, df, country, year_column, dict_lf, dict_km):
+                def update_dictionaries(transport_set, df, country, year_column, dict_lf, dict_km, base_year):
                     """
                     Update dictionaries with demand, fleet, and share values for different transport types.
                     
@@ -3948,9 +3969,25 @@ for s in range(len(scenario_list)):
                     dem_by = {}
                     sum_dem_by = 0
                     for trn_type in transport_set:
-                        fby = get_data(df, trn_type, country, 'Residual fleet', year_column)
-                        km = get_data(df, trn_type, country, 'Distance', year_column)
-                        lf = get_data(df, trn_type, country, 'Load Factor', year_column)
+                        # make an exception to Uruguay 2025, check this change after
+                        ############################################################
+                        if get_data_2(df, trn_type, country, 'Residual fleet', 'projection').astype(str).values[0] == 'flat':
+                            fby = get_data(df, trn_type, country, 'Residual fleet', base_year)
+                        else:
+                            fby = get_data(df, trn_type, country, 'Residual fleet', year_column)
+                        if get_data_2(df, trn_type, country, 'Distance', 'projection').astype(str).values[0] == 'flat':
+                            km = get_data(df, trn_type, country, 'Distance', base_year)
+                        else:
+                            km = get_data(df, trn_type, country, 'Distance', year_column)
+                        if get_data_2(df, trn_type, country, 'Load Factor', 'projection').astype(str).values[0] == 'flat':
+                            lf = get_data(df, trn_type, country, 'Load Factor', base_year)
+                        else:
+                            lf = get_data(df, trn_type, country, 'Load Factor', year_column)
+                        ############################################################
+                        
+                        # fby = get_data(df, trn_type, country, 'Residual fleet', year_column)
+                        # km = get_data(df, trn_type, country, 'Distance', year_column)
+                        # lf = get_data(df, trn_type, country, 'Load Factor', year_column)
                         
                         dict_lf[trn_type] = deepcopy(lf)
                         dict_km[trn_type] = deepcopy(km)
@@ -3959,6 +3996,7 @@ for s in range(len(scenario_list)):
                         dem_by_value = fby * km * lf / 1e9
                         dem_by[trn_type] = dem_by_value
                         sum_dem_by += dem_by_value
+                        # print(trn_type,fby, km, lf)
                         
                     dem_sh = {trn_type: 100 * dem_by_value / sum_dem_by for trn_type, dem_by_value in dem_by.items()}
                     
@@ -3971,12 +4009,29 @@ for s in range(len(scenario_list)):
                 
                 # For Passenger trains
                 list_pass_trn = filter_transport_types(list_trn_type, list_trn_lvl1_u_raw, 'Passenger')
-                set_pass_trn_fleet_by, set_pass_trn_dem_by, set_pass_trn_dem_sh, sum_pass_trn_dem_by = update_dictionaries(list_pass_trn, df_trn_data, this_country, per_first_yr, dict_lf, dict_km)
+                set_pass_trn_fleet_by, set_pass_trn_dem_by, set_pass_trn_dem_sh, sum_pass_trn_dem_by = update_dictionaries(list_pass_trn, df_trn_data, this_country, per_first_yr, dict_lf, dict_km,per_first_yr)
+                
+                # make an exception to Uruguay 2025, check this change after
+                ############################################################
+                years_exception_temp_fix = [2021,2022,2023]
+                list_excep_sum_pass_trn_dem_by = []
+                for ye in years_exception_temp_fix:
+                    set_pass_trn_fleet_by1, set_pass_trn_dem_by1, set_pass_trn_dem_sh1, sum_pass_trn_dem_by1 = update_dictionaries(list_pass_trn, df_trn_data, this_country, ye, dict_lf, dict_km,per_first_yr)
+                    list_excep_sum_pass_trn_dem_by.append(sum_pass_trn_dem_by1)
+                ############################################################
                 
                 # For Freight trains
                 list_fre_trn = filter_transport_types(list_trn_type, list_trn_lvl1_u_raw, 'Freight')
-                set_fre_trn_fleet_by, set_fre_trn_dem_by, set_fre_trn_dem_sh, sum_fre_trn_dem_by = update_dictionaries(list_fre_trn, df_trn_data, this_country, per_first_yr, dict_lf, dict_km)
+                set_fre_trn_fleet_by, set_fre_trn_dem_by, set_fre_trn_dem_sh, sum_fre_trn_dem_by = update_dictionaries(list_fre_trn, df_trn_data, this_country, per_first_yr, dict_lf, dict_km,per_first_yr)
 
+                # make an exception to Uruguay 2025, check this change after
+                ############################################################
+                years_exception_temp_fix = [2021,2022,2023]
+                list_excep_sum_fre_trn_dem_by = []
+                for ye in years_exception_temp_fix:
+                    set_fre_trn_fleet_by1, set_fre_trn_dem_by1, set_fre_trn_dem_sh1, sum_fre_trn_dem_by1 = update_dictionaries(list_fre_trn, df_trn_data, this_country, ye, dict_lf, dict_km,per_first_yr)
+                    list_excep_sum_fre_trn_dem_by.append(sum_fre_trn_dem_by1)
+                ############################################################
     
                 # 1.b) estimate the demand growth
                 # for this we need to extract a couple of variables from
@@ -4002,7 +4057,7 @@ for s in range(len(scenario_list)):
                     return projtype, mask
                 
                 # Function #28
-                def project_demand(time_vector, projtype, mask, df, sum_demand_by, gdp_growth_vals, gdp_pc_growth_vals, pop_growth_vals, ela_list):
+                def project_demand(time_vector, projtype, mask, df, sum_demand_by, gdp_growth_vals, gdp_pc_growth_vals, pop_growth_vals, ela_list,list_excep_sum_demand_by):
                     """
                     Project transport demand based on the given projection type and growth parameters.
                     
@@ -4021,9 +4076,21 @@ for s in range(len(scenario_list)):
                     - trn_dem (list): List of projected transport demand values for each year in the time vector.
                     """
                     trn_dem = [0 for y in range(len(time_vector))]
+                    
+                    # make an exception to Uruguay 2025, check this change after
+                    ############################################################
+                    years_exception_temp_fix = [2021,2022,2023]
+                    ############################################################
+                    
                     for y in range(len(time_vector)):
-                        if y == 0:
-                            trn_dem[y] = sum_demand_by
+                        # make an exception to Uruguay 2025, check this change after
+                        ############################################################
+                        if time_vector[y] in years_exception_temp_fix:
+                            trn_dem[y] = list_excep_sum_demand_by[y]
+                        ############################################################
+                        
+                        # if y == 0:
+                        #     trn_dem[y] = sum_demand_by
                         else:
                             gdp_gr = gdp_growth_vals[y] / 100
                             gdp_pc_gr = gdp_pc_growth_vals[y] / 100
@@ -4057,13 +4124,13 @@ for s in range(len(scenario_list)):
                 if 'endogenous' not in projtype_dem_pas:
                     pass_trn_dem = fun_dem_proj(time_vector, projtype_dem_pas, mask_dem_pas, df_trn_data)
                 else:
-                    pass_trn_dem = project_demand(time_vector, projtype_dem_pas, mask_dem_pas, df_trn_data, sum_pass_trn_dem_by, this_gdp_growth_vals, this_gdp_pc_growth_vals, this_pop_growth_vals, list_ela_pas)
-                
+                    pass_trn_dem = project_demand(time_vector, projtype_dem_pas, mask_dem_pas, df_trn_data, sum_pass_trn_dem_by, this_gdp_growth_vals, this_gdp_pc_growth_vals, this_pop_growth_vals, list_ela_pas,list_excep_sum_pass_trn_dem_by)
+
                 projtype_dem_fre, mask_dem_fre = get_dem_model_projtype('Freight', this_country, 'Demand', 'projection', df_trn_data)
                 if 'endogenous' not in projtype_dem_fre:
                     fre_trn_dem = fun_dem_proj(time_vector, projtype_dem_fre, mask_dem_fre, df_trn_data)
                 else:
-                    fre_trn_dem = project_demand(time_vector, projtype_dem_fre, mask_dem_fre, df_trn_data, sum_fre_trn_dem_by, this_gdp_growth_vals, this_gdp_pc_growth_vals, this_pop_growth_vals, list_ela_fre)
+                    fre_trn_dem = project_demand(time_vector, projtype_dem_fre, mask_dem_fre, df_trn_data, sum_fre_trn_dem_by, this_gdp_growth_vals, this_gdp_pc_growth_vals, this_pop_growth_vals, list_ela_fre,list_excep_sum_fre_trn_dem_by)
                 
                 projtype_dem_oth, mask_dem_oth = get_dem_model_projtype('Other', this_country, 'Demand', 'projection', df_trn_data)
                 # Note: "Other" [transport demands] is a category currently unused
@@ -4897,9 +4964,26 @@ for s in range(len(scenario_list)):
                     new_fleet_lst = [0 for y in range(len(time_vector))]
                     times_neg_new_fleet = 0
                     times_neg_new_fleet_sto = []
+                    
+                    # make an exception to Uruguay 2025, check this change after
+                    ############################################################
+                    years_exception_temp_fix = [2021,2022,2023]
+                    ############################################################
                 
                     for y in range(len(time_vector)):
-                        this_new_fleet = tot_fleet_lst[y] - res_fleet_lst[y] - (0 if y == 0 else accum_fleet_lst[y])
+                        # make an exception to Uruguay 2025, check this change after
+                        ############################################################
+                        if time_vector[y] in years_exception_temp_fix:
+                            tot_fleet_lst[y] = res_fleet_lst[y]
+                            if time_vector[y] == 2021:
+                                this_new_fleet = 0
+                            else:
+                                this_new_fleet = 0 if res_fleet_lst[y] < res_fleet_lst[y-1] else res_fleet_lst[y] - res_fleet_lst[y-1]
+                        else:
+                            this_new_fleet = tot_fleet_lst[y] - res_fleet_lst[y] - (0 if y == 0 else accum_fleet_lst[y])
+                        ############################################################
+                        
+                        # this_new_fleet = tot_fleet_lst[y] - res_fleet_lst[y] - (0 if y == 0 else accum_fleet_lst[y])
                         if this_new_fleet >= 10:
                             new_fleet_lst[y] = this_new_fleet
                             for y2 in range(y, y + int(list_op_life[y])):
@@ -4908,9 +4992,14 @@ for s in range(len(scenario_list)):
                         else:
                             times_neg_new_fleet += 1
                             times_neg_new_fleet_sto.append(this_new_fleet)
-                
+                            
+                    # make an exception to Uruguay 2025, check this change after
+                    ############################################################
+                    dict_fleet_k[t][f] = tot_fleet_lst
+                    ############################################################
+                    
                     return new_fleet_lst, accum_fleet_lst, times_neg_new_fleet, times_neg_new_fleet_sto, \
-                        tot_fleet_lst, fuel_con_lst #, dict_fleet_new
+                        tot_fleet_lst, fuel_con_lst
                 
                 # Function #52
                 def convert_variable_cost_unit(unit_var_cost, f, conv_cons):
@@ -5081,10 +5170,17 @@ for s in range(len(scenario_list)):
                         list_op_life, unit_op_life = fun_unpack_costs('OpLife', t      , f, d5_tpt, time_vector)
                         apply_costs = {'CapitalCost': deepcopy(list_cap_cost), 'VariableCost': deepcopy(list_var_cost)}
                         
+                        # if t == 'Automoviles' and f == 'GASOLINA/ALCOHOL':
+                        #     print(dict_fleet_k[t][f][:4])
+                        
                         new_fleet_lst, accum_fleet_lst, times_neg_new_fleet, times_neg_new_fleet_sto, \
                             tot_fleet_lst, fuel_con_lst = calculate_new_accumulated_fleet(t, f, dict_fleet_k, \
                             dict_fuel_con, dict_resi_cap_trn, list_op_life, time_vector)
                         conv_cons = convert_variable_cost_unit(unit_var_cost, f, conv_cons)
+                        
+                        # if t == 'Automoviles' and f == 'GASOLINA/ALCOHOL':
+                        #     print(dict_fleet_k[t][f][:4])
+                        #     sys.exit(3)
                         
                         usd_capex_lst = []
                         usd_fopex_lst = []
@@ -8890,7 +8986,7 @@ dict_tier2_package = {
 }
 
 def execute_bulac_tier2(dict_tier2_package):
-    dict_scen, dict_scen_percentage, count_wrong_activity_fuel = bulac_tier2.run_model(dict_tier2_package)
+    dict_scen, dict_scen_percentage, count_wrong_activity_fuel = model_bulac_tier2.run_model(dict_tier2_package)
     return dict_scen, dict_scen_percentage, count_wrong_activity_fuel
 
 dict_scen, dict_scen_percentage, count_wrong_activity_fuel = execute_bulac_tier2(dict_tier2_package)
