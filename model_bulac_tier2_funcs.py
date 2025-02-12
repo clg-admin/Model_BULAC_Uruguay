@@ -523,7 +523,7 @@ def calculate_unit_tax_one_tax_by_time(year, dict_scen, adjustments_percent, dic
                                 if float(activity_amount) > 0.0 or float(activity_amount) < 0.0:
                                     if tax == tax_id:
                                         if tax in tax_exceptions:
-                                            unit_tax = unit_tax = (specific_adjustment) / activity_amount
+                                            unit_tax = (specific_adjustment) / activity_amount
                                         else:
                                             unit_tax = ((tax_adjustment_percent) * tax_actual) / activity_amount
                                     else:
@@ -727,6 +727,200 @@ def calculate_unit_tax_by_activity(year, dict_scen, adjustments_percent, dict_ta
 
     return unit_taxes, unit_taxes_percentage
 
+
+# factors by sums of activity (Luis method)
+def calculate_unit_tax_by_sum_activity(year, dict_scen, adjustments_percent, dict_tax_scen, dict_activities_out, fiscal_gaps, factors, time_vector, params_tier2, dict_mult_depr, base_dict_scen, alternative_tax='IVA_Elec'):
+    """
+    Calculates unit taxes across various scenarios by incorporating fiscal gaps, adjustment factors, and specific economic activities,
+    with an option for interpolating these values over a timeline. This function adjusts unit taxes based on a combination of economic activities
+    and fiscal policies, considering different scenarios except for the 'BAU' (Business As Usual).
+
+    Args:
+        year (int): The target year for which the unit taxes are to be calculated.
+        dict_scen (dict): A dictionary containing the scenario-specific data, which includes detailed activities for different technologies and fuels.
+        adjustments_percent (dict): A dictionary holding adjustment percentages for each tax, categorized by scenario, region, and country.
+        dict_tax_scen (dict): A dictionary with actual tax amounts for each tax type across different scenarios, regions, countries, technologies, and fuels.
+        dict_activities_out (dict): A dictionary mapping tax types to corresponding activity data, which helps in the calculation of unit taxes.
+        fiscal_gaps (dict): A dictionary detailing fiscal gaps for various scenarios, which are used to adjust the tax calculations.
+        factors (dict): A dictionary containing factors that are used to distribute the fiscal gaps among various taxes.
+        time_vector (list): A list of all years for which data is available and calculations need to be made.
+        params_tier2 (dict): Parameters that include settings for interpolation, which can be used to smooth out changes in tax calculations over time.
+
+    Returns:
+        dict: A nested dictionary structured by scenario, region, country, tax type, technology, and fuel. Each entry contains a list of calculated unit
+              taxes for each year, adjusted for fiscal gaps and specific activities.
+
+    Raises:
+        ValueError: If the specified year is not found within the 'time_vector', indicating that the data for that year is unavailable.
+    """
+    # tax_exceptions = ['IC', 'IMESI_Combust', 'IVA_Gasoil', 'Otros_Gasoil']
+    # fuel_exceptions = ['ELECTRICIDAD', 'HIDROGENO']
+    # factors_NETZERO = deepcopy(factors)
+
+    # Define the inital year to interpolation
+    index_initial_year_interpolation = time_vector.index(params_tier2['year_ini_inter'])
+
+    try:
+        year_index = time_vector.index(year)
+    except ValueError:
+        print(f"The year {year} is not found in the time_vector.")
+        return {}
+
+    unit_taxes = {}
+    unit_taxes_percentage = {}
+    
+    for scenario in adjustments_percent:
+        sum_k = 0
+        if scenario != 'BAU':
+            
+            # if scenario == 'NETZERO':
+            #     for tax_ex in tax_exceptions:
+            #         factors_NETZERO[alternative_tax] += factors_NETZERO[tax_ex]
+            #         factors_NETZERO[tax_ex] = 0
+            
+            unit_taxes[scenario] = {}
+            unit_taxes_percentage[scenario] = {}
+            for region in adjustments_percent[scenario]:
+                unit_taxes[scenario][region] = {}
+                unit_taxes_percentage[scenario][region] = {}
+                for country in adjustments_percent[scenario][region]:
+                    unit_taxes[scenario][region][country] = {}
+                    unit_taxes_percentage[scenario][region][country] = {}
+                    scenario_data = dict_scen[scenario][region][country]
+                    fiscal_gap = fiscal_gaps[scenario][region][country]
+                    
+                    # if scenario == 'NETZERO':
+                    #     fiscal_distribution = {tax: fiscal_gap * factors_NETZERO[tax] for tax in factors_NETZERO if tax != "Total Taxes Incomes"}
+                    # else:
+                        # fiscal_distribution = {tax: fiscal_gap * factors[tax] for tax in factors if tax != "Total Taxes Incomes"}
+                    
+                    
+                    
+                    fiscal_distribution = {tax: fiscal_gap * factors[tax] for tax in factors if tax != "Total Taxes Incomes"}
+        
+                    for tax, techs_types in dict_activities_out['Relation Tax-Activity2'].items():
+                        unit_taxes[scenario][region][country][tax] = {}
+                        unit_taxes[scenario][region][country][f'Transport Tax {tax} [$]'] = {}
+                        unit_taxes_percentage[scenario][region][country][tax] = {}
+                        unit_taxes_percentage[scenario][region][country][f'Transport Tax {tax} [$]'] = {}
+                        
+                        w_factor_tax = factors[tax]
+                        
+                        if tax == "Total Taxes Incomes":
+                            continue
+                        
+                        extra_unit_tax_activity = 0
+                        
+        
+                        for tech, fuel_types in techs_types.items():
+                            extra_unit_tax = 0
+                            extra_activity = 0
+                            for fuel, cost_type in fuel_types.items():
+                                # Correctly accessing activity based on cost_type
+                                if cost_type == 'CapitalCost':
+                                    activity = scenario_data['New Fleet'][tech][fuel][year_index]
+                                elif cost_type == 'CapitalCost*':
+                                    activity = scenario_data['Fleet'][tech][fuel][year_index]
+                                elif cost_type == 'KmCost':
+                                    activity = scenario_data['Fleet'][tech][fuel][year_index]
+                                else:  # 'VariableCost' and other costs
+                                    activity = scenario_data['Fuel Consumption'][tech][fuel][year_index]
+                                    conversion_factors = scenario_data['Conversion Fuel Constant'][tech][fuel]
+                                    activity /= conversion_factors
+                                # if (tax in tax_exceptions and scenario == 'NETZERO'):
+                                #     tax_contribution_for_fuel = 0
+                                # else:
+                                #     tax_contribution_for_fuel = dict_tax_scen[scenario][region][country][tax][tech][fuel][year_index]
+                                
+                                # if (tax in tax_exceptions and scenario == 'NETZERO'):
+                                #     activity = 0
+                                
+                                unit_tax_per_fuel = deepcopy(base_dict_scen[scenario][region][country][tax][tech][fuel][year_index])
+                                extra_unit_tax += unit_tax_per_fuel
+                                extra_activity += activity
+                                
+                            extra_unit_tax_activity += extra_unit_tax * extra_activity
+                                
+                        if extra_unit_tax_activity == 0.0:
+                            k_constant = 0
+                        else:
+                            k_constant = ((w_factor_tax*fiscal_gap)/(extra_unit_tax_activity)) #- 1
+                            # if k_constant < 0:
+                            #     print('negativo')
+                            #     print(factors)
+                            #     print(tax)
+                            #     print(w_factor_tax,fiscal_gap,extra_unit_tax_activity)
+                            #     sys.exit()
+                        # if scenario == 'NETZERO':
+                        #     sum_k += k_constant
+                            # print(scenario, tax, k_constant,sum_k)
+                        for tech, fuel_types in techs_types.items():
+                            unit_taxes[scenario][region][country][tax][tech] = {}
+                            unit_taxes[scenario][region][country][f'Transport Tax {tax} [$]'][tech] = {}
+                            unit_taxes_percentage[scenario][region][country][tax][tech] = {}
+                            unit_taxes_percentage[scenario][region][country][f'Transport Tax {tax} [$]'][tech] = {}
+                            
+                            for fuel, cost_type in fuel_types.items():
+                                # Correctly accessing activity based on cost_type
+                                if cost_type == 'CapitalCost':
+                                    activity_amount = scenario_data['New Fleet'][tech][fuel][year_index]
+                                    activity_base = scenario_data['New Fleet'][tech][fuel]
+                                elif cost_type == 'CapitalCost*':
+                                    activity_amount = scenario_data['Fleet'][tech][fuel][year_index]
+                                    activity_base = scenario_data['Fleet'][tech][fuel]
+                                elif cost_type == 'KmCost':
+                                    activity_amount = scenario_data['Fleet'][tech][fuel][year_index]
+                                    activity_base = scenario_data['Fleet'][tech][fuel]
+                                else:  # 'VariableCost' and other costs
+                                    conversion_factors = scenario_data['Conversion Fuel Constant'][tech][fuel]
+                                    activity_amount = scenario_data['Fuel Consumption'][tech][fuel][year_index]
+                                    activity_amount /= conversion_factors
+                                    activity_base = scenario_data['Fuel Consumption'][tech][fuel]
+                                    activity_base = [x / conversion_factors for x in activity_base]
+                                unit_tax_per_fuel = deepcopy(base_dict_scen[scenario][region][country][tax][tech][fuel][year_index])
+                                # if extra_unit_tax_activity == 0.0 or unit_tax_per_fuel == 0.0:
+                                #     k_constant = 0
+                                # else:
+                                #     k_constant = ((w_factor_tax*fiscal_gap)/(unit_tax_per_fuel*activity_amount))
+                                #     k_constant = (w_factor_tax*fiscal_gap)/(unit_tax_per_fuel*activity_amount)
+                                # proportion_activity = activity_amount / total_activity_for_tax if total_activity_for_tax > 0 else 0
+                                # specific_adjustment = fiscal_distribution[tax] * proportion_activity
+                                
+                                # unit taxes of base adjust
+                                values_list_base = deepcopy(base_dict_scen[scenario][region][country][tax][tech][fuel])
+                                
+                                # if activity_amount > 0:
+                                #     k_constant = ((w_factor_tax)/((1/fiscal_gap) * total_unit_tax_for_tax * total_activity_for_tax)) - 1
+                                #     unit_tax = k_constant * values_list_base[year_index]
+                                # else:
+                                #     unit_tax = 0.0  # No activity means no unit tax calculation necessary
+                                
+                                unit_tax = k_constant * values_list_base[year_index]
+
+                                values_list = ['' for year in time_vector]
+                                values_list[year_index] = unit_tax
+                        
+                                # if tax in tax_exceptions and scenario == 'NETZERO':
+                                #     values_list[year_index] = 0.0
+                                # else:
+                                #     values_list[year_index] = unit_tax
+                                    
+                                values_list[year_index] = unit_tax
+                                values_list[index_initial_year_interpolation] = 0.0
+                                
+                                for y in range(0,index_initial_year_interpolation):
+                                    values_list[y] = 0.0
+                                
+                                values_list = interpolation_to_end(time_vector, \
+                                    params_tier2['year_ini_inter'], values_list, 'interme', 'Population')  
+                                values_list_final = [a + b for a, b in zip(values_list_base, values_list)]
+
+                                unit_taxes[scenario][region][country][tax][tech][fuel] = values_list_final
+                                unit_taxes[scenario][region][country][f'Transport Tax {tax} [$]'][tech][fuel] = [a * b for a, b in zip(values_list_final, activity_base)]
+                                unit_taxes_percentage[scenario][region][country][tax][tech][fuel] = [a * b for a, b in zip(values_list_final, dict_mult_depr[tax][tech][fuel])]
+                                unit_taxes_percentage[scenario][region][country][f'Transport Tax {tax} [$]'][tech][fuel] = [a * b for a, b in zip(values_list_final, activity_base)]
+
+    return unit_taxes, unit_taxes_percentage
 
 def read_factors(xls_path, sheet_name, factor_column_name):
     """

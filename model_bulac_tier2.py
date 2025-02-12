@@ -25,7 +25,7 @@ from model_bulac_tier2_funcs import calculate_tax_differences, \
     redistribute_factors_if_no_activity, get_activity_for_fuel, \
     redistribute_across_technologies, calculate_unit_tax_with_factors_for_fuels, \
     integrate_unit_taxes_into_dict_scen, changes_tax_keys_unit_taxes_dict, \
-    take_factors_distribution
+    take_factors_distribution, calculate_unit_tax_by_sum_activity
 
 
 def run_model(dict_tier2_package):
@@ -228,6 +228,7 @@ def run_model(dict_tier2_package):
                                 if adjust_id != scenarios_cases_list[0] and adjust_id not in tax_params and adjust_id == 'factors_by_activity' and params_tier2['by_activity']:
                                     # Call the function to calculate unit taxes using predefined factors, 
                                     # fiscal gaps and make distribution according activity
+                                    # unit_taxes_activity_by_factor, unit_taxes_activity_by_factor_percentage = calculate_unit_tax_by_sum_activity(
                                     unit_taxes_activity_by_factor, unit_taxes_activity_by_factor_percentage = calculate_unit_tax_by_activity(
                                         year=year_to_adjust,
                                         dict_scen=dict_scen_2,

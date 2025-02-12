@@ -4967,6 +4967,13 @@ for s in range(len(scenario_list)):
                     
                     # make an exception to Uruguay 2025, check this change after
                     ############################################################
+                    growth_rate_fleet = [0] + [0 if tot_fleet_lst[i-1] <= 0 else (tot_fleet_lst[i] - tot_fleet_lst[i-1]) / tot_fleet_lst[i-1] 
+                           for i in range(1, len(tot_fleet_lst))]
+
+                    # if f=='DIESEL OIL':
+                    #     print(growth_rate_fleet)
+                    #     print(tot_fleet_lst)
+                    #     sys.exit()
                     years_exception_temp_fix = [2021,2022,2023]
                     ############################################################
                 
@@ -4977,22 +4984,53 @@ for s in range(len(scenario_list)):
                             tot_fleet_lst[y] = res_fleet_lst[y]
                             if time_vector[y] == 2021:
                                 this_new_fleet = 0
+                                # if f=='DIESEL OIL':
+                                #     print(time_vector[y],t,f,tot_fleet_lst[y] , res_fleet_lst[y-1],accum_fleet_lst[y],tot_fleet_lst[y] - res_fleet_lst[y-1],growth_rate_fleet[y])
                             else:
-                                this_new_fleet = 0 if res_fleet_lst[y] < res_fleet_lst[y-1] else res_fleet_lst[y] - res_fleet_lst[y-1]
+                                
+                                # if time_vector[y] == 2023:
+                                #     growth_rate_residual_fleet = 0 if tot_fleet_lst[y-1] <= 0 else (tot_fleet_lst[y] - tot_fleet_lst[y-1]) / tot_fleet_lst[y-1] 
+                                
+                                this_new_fleet = 0 if tot_fleet_lst[y] < res_fleet_lst[y-1] else tot_fleet_lst[y] - res_fleet_lst[y-1]
+                                # if f=='DIESEL OIL':
+                                #     # print(y,time_vector[y],res_fleet_lst , res_fleet_lst,accum_fleet_lst)
+                                #     print(time_vector[y],t,f,tot_fleet_lst[y] , res_fleet_lst[y-1],accum_fleet_lst[y],tot_fleet_lst[y] - res_fleet_lst[y-1],growth_rate_fleet[y])
                         else:
+                            
+                            # tot_fleet_lst[y] = tot_fleet_lst[y-1] + tot_fleet_lst[y-1]*growth_rate_fleet[y]
+                            
+                            # if time_vector[y] == 2024:
+                            #     tot_fleet_lst[y] = tot_fleet_lst[y-1] + tot_fleet_lst[y-1]*growth_rate_residual_fleet
+                            
                             this_new_fleet = tot_fleet_lst[y] - res_fleet_lst[y] - (0 if y == 0 else accum_fleet_lst[y])
+                            # if f=='DIESEL OIL':
+                            #     # print(y,time_vector[y],tot_fleet_lst , res_fleet_lst,accum_fleet_lst)
+                            #     print(y,time_vector[y],t,f,tot_fleet_lst[y] , res_fleet_lst[y],accum_fleet_lst[y],tot_fleet_lst[y] - res_fleet_lst[y]- (0 if y == 0 else accum_fleet_lst[y]),growth_rate_fleet[y])
+                            #     if time_vector[y] == 2027:
+                                    
+                            #         sys.exit(1)
                         ############################################################
                         
                         # this_new_fleet = tot_fleet_lst[y] - res_fleet_lst[y] - (0 if y == 0 else accum_fleet_lst[y])
+                        # if f=='DIESEL OIL':
+                        #     print(time_vector[y],t,f,tot_fleet_lst[y] , res_fleet_lst[y],accum_fleet_lst[y],tot_fleet_lst[y] - res_fleet_lst[y]- (0 if y == 0 else accum_fleet_lst[y]))
+                        #     if time_vector[y] == 2027:
+                        #         sys.exit()
+                        
                         if this_new_fleet >= 10:
                             new_fleet_lst[y] = this_new_fleet
                             for y2 in range(y, y + int(list_op_life[y])):
                                 if y2 < len(time_vector):
+                                    # if time_vector[y] == 2023:
+                                    #     print(y,accum_fleet_lst,time_vector[y])
+                                        # sys.exit()
                                     accum_fleet_lst[y2] += this_new_fleet
                         else:
                             times_neg_new_fleet += 1
                             times_neg_new_fleet_sto.append(this_new_fleet)
-                            
+                        # print(y,this_new_fleet,accum_fleet_lst,time_vector[y])
+                    yf = time_vector.index(2024)
+                    new_fleet_lst[yf] = (new_fleet_lst[yf-1] + new_fleet_lst[yf+1]) / 2
                     # make an exception to Uruguay 2025, check this change after
                     ############################################################
                     dict_fleet_k[t][f] = tot_fleet_lst
