@@ -1665,7 +1665,7 @@ def calculate_new_accumulated_fleet(t, f, dict_fleet_k, dict_fuel_con, dict_resi
         ############################################################
         
         # this_new_fleet = tot_fleet_lst[y] - res_fleet_lst[y] - (0 if y == 0 else accum_fleet_lst[y])
-        if this_new_fleet >= 10:
+        if this_new_fleet >= 0:
             new_fleet_lst[y] = this_new_fleet
             for y2 in range(y, y + int(list_op_life[y])):
                 if y2 < len(time_vector):

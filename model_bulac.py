@@ -1295,7 +1295,7 @@ list_fuel_ALL = list(set([v for v in list(set(df3_scen['Fuel'].tolist()))]))
 list_fuel_ALL = [i for i in list_fuel_ALL if type(i) is str]
 dict_energy_demand_by_fuel_sum = {
     k: [0] * len(time_vector) for k in list_fuel_ALL}
-
+dict_resultado_scen = {}
 for s in range(len(scenario_list)):
     this_scen = scenario_list[s]
     # print('# 1 - ', this_scen)
@@ -4015,9 +4015,11 @@ for s in range(len(scenario_list)):
                 ############################################################
                 years_exception_temp_fix = [2021,2022,2023]
                 list_excep_sum_pass_trn_dem_by = []
+                list_excep_set_pass_trn_fleet_by1 = []
                 for ye in years_exception_temp_fix:
                     set_pass_trn_fleet_by1, set_pass_trn_dem_by1, set_pass_trn_dem_sh1, sum_pass_trn_dem_by1 = update_dictionaries(list_pass_trn, df_trn_data, this_country, ye, dict_lf, dict_km,per_first_yr)
                     list_excep_sum_pass_trn_dem_by.append(sum_pass_trn_dem_by1)
+                    list_excep_set_pass_trn_fleet_by1.append(set_pass_trn_fleet_by1)
                 ############################################################
                 
                 # For Freight trains
@@ -4028,9 +4030,11 @@ for s in range(len(scenario_list)):
                 ############################################################
                 years_exception_temp_fix = [2021,2022,2023]
                 list_excep_sum_fre_trn_dem_by = []
+                list_excep_set_fre_trn_fleet_by1 = []
                 for ye in years_exception_temp_fix:
                     set_fre_trn_fleet_by1, set_fre_trn_dem_by1, set_fre_trn_dem_sh1, sum_fre_trn_dem_by1 = update_dictionaries(list_fre_trn, df_trn_data, this_country, ye, dict_lf, dict_km,per_first_yr)
                     list_excep_sum_fre_trn_dem_by.append(sum_fre_trn_dem_by1)
+                    list_excep_set_fre_trn_fleet_by1.append(set_fre_trn_fleet_by1)
                 ############################################################
     
                 # 1.b) estimate the demand growth
@@ -4447,7 +4451,7 @@ for s in range(len(scenario_list)):
                 
                     return fleet_by_sh, dict_resi_fleet
 
-                # Using the functions to replace the existing code
+                
                 set_pass_trn_fleet_by_sh, dict_resi_cap_trn_V_pass = calculate_fleet_shares_by_vehicle_type(
                     types_pass, fuels, df_trn_data, this_country, per_first_yr, time_vector, set_pass_trn_fleet_by
                 )
@@ -4601,6 +4605,7 @@ for s in range(len(scenario_list)):
                             print('Undefined fuel set (1). Please check.')
                             sys.exit()
                         dict_fuel_economy[t][af] = deepcopy(list_fe_k[af])
+                                 
                 
                 """
                 Paso 3: calcular la energía requerida para el sector transporte
@@ -4626,7 +4631,7 @@ for s in range(len(scenario_list)):
                 # Function #44
                 def aggregate_gpkm(types, gpkm_pri_k, gpkm_pub_k, gtkm_freight_k):
                     """
-                    Aggregate gpkm (passenger kilometers) and gtkm (goods kilometers) for all transport types.
+                    Aggregate gpkm and gtkm for all transport types.
                     
                     Args:
                     - types (list): List of transport types or categories.
@@ -4715,6 +4720,21 @@ for s in range(len(scenario_list)):
                 # Replace the existing code with function calls
                 dict_trn_pj = {key: [] for key in fuels}
                 dict_gpkm_gtkm, this_gpkm_add, t = aggregate_gpkm(types_all, gpkm_pri_k, gpkm_pub_k, gtkm_freight_k)
+                
+                
+                # dict_resultado_scen[this_scen] = {}
+                
+                # # Asumimos que todas las listas tienen la misma longitud.
+                # longitud = len(next(iter(dict_gpkm_gtkm.values())))
+                
+                # for indice in range(longitud):
+                #     suma = 0.0  # Inicializamos la suma para el índice actual
+                #     for tipo_auto, valores in dict_gpkm_gtkm.items():
+                #         suma += valores[indice]  # Acumulamos correctamente el valor
+                #     dict_resultado_scen[this_scen][indice] = float(suma)
+                
+
+                
                 dict_fleet_k = initialize_nested_dict(types_all, fuels, len(time_vector))
                 dict_fuel_con = initialize_nested_dict(types_all, fuels, len(time_vector))
                 dict_conv_cons = initialize_nested_dict(types_all, fuels, len(time_vector))
@@ -4849,7 +4869,8 @@ for s in range(len(scenario_list)):
                             dict_trn_pj_2[this_f][t][y] = deepcopy(add_fuel_con)
                             
                             
-                
+                            # if t=='Automoviles' and this_f == 'GASOLINA/ALCOHOL' and 0 <= y <= 5:
+                            #     print(this_scen,this_gpkm_gtkm * this_sh_fl)
                             this_gpkm_gtkm_k = this_gpkm_gtkm * this_sh_fl
                             dict_gpkm_gtkm_k[t][this_f][y] = this_gpkm_gtkm_k
                 
@@ -4967,8 +4988,8 @@ for s in range(len(scenario_list)):
                     
                     # make an exception to Uruguay 2025, check this change after
                     ############################################################
-                    growth_rate_fleet = [0] + [0 if tot_fleet_lst[i-1] <= 0 else (tot_fleet_lst[i] - tot_fleet_lst[i-1]) / tot_fleet_lst[i-1] 
-                           for i in range(1, len(tot_fleet_lst))]
+                    # growth_rate_fleet = [0] + [0 if tot_fleet_lst[i-1] <= 0 else (tot_fleet_lst[i] - tot_fleet_lst[i-1]) / tot_fleet_lst[i-1] 
+                    #        for i in range(1, len(tot_fleet_lst))]
                     years_exception_temp_fix = [2021,2022,2023]
                     ############################################################
                 
@@ -4989,13 +5010,34 @@ for s in range(len(scenario_list)):
                         
                         # this_new_fleet = tot_fleet_lst[y] - res_fleet_lst[y] - (0 if y == 0 else accum_fleet_lst[y])
                         
+                        if time_vector[y] == 2033 and t == 'Automoviles' and f == 'GASOLINA/ALCOHOL':
+                            print(this_scen)
+                        #     print('y:',y)
+                            # print('time_vector[y]:',time_vector[y])
+                            print('tot_fleet_lst[y]:',tot_fleet_lst[y])
+                            print('res_fleet_lst[y]:',res_fleet_lst[y])
+                            print('this_new_fleet:',this_new_fleet)
+                        #     print('accum_fleet_lst[y]:',accum_fleet_lst[y])
+                        #     print('accum_fleet_lst:',accum_fleet_lst)
+                            # print(new_fleet_lst[y])
+                                
+                            #print(list_op_life[y],y,time_vector[y],tot_fleet_lst[y] , res_fleet_lst[y] ,accum_fleet_lst[y],this_new_fleet, accum_fleet_lst)
+                            # if time_vector[y] == 2032:
+                            #     sys.exit()
                         
-                        if this_new_fleet >= 10:
+                        if this_new_fleet >= 0:
                             new_fleet_lst[y] = this_new_fleet
-                            if time_vector[y] not in years_exception_temp_fix:
-                                for y2 in range(y, y + int(list_op_life[y])):
-                                    if y2 < len(time_vector):
-                                        accum_fleet_lst[y2] += this_new_fleet
+                            # if time_vector[y] not in years_exception_temp_fix:
+                            for y2 in range(y, y + int(list_op_life[y])):
+                                if y2 < len(time_vector):
+                                    accum_fleet_lst[y2] += this_new_fleet
+                                    # if this_scen == 'BAU' and 2025 <= time_vector[y] <= 2033 and t == 'CamionesA' and f == 'DIESEL OIL':
+                                    #     print(y, list_op_life[y],y2, accum_fleet_lst[y2],this_new_fleet)
+                            # if this_scen == 'BAU' and time_vector[y] and t == 'CamionesA' and f == 'DIESEL OIL':
+                            #     if time_vector[y] == 2050:
+                            #         sys.exit()
+                        # elif this_new_fleet <0:
+                        #     new_fleet_lst[y] = -this_new_fleet
                         else:
                             times_neg_new_fleet += 1
                             times_neg_new_fleet_sto.append(this_new_fleet)
