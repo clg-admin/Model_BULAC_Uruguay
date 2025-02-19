@@ -253,33 +253,33 @@ def run_model(dict_tier2_package):
                                     unit_taxes_activity_by_factor_percentage = changes_tax_keys_unit_taxes_dict(deepcopy(unit_taxes_activity_by_factor_percentage))
                                     filtered_dict_scen_percentage[f'{adjust_id}_{factor_number}']= deepcopy(unit_taxes_activity_by_factor_percentage)
                             
-                                elif adjust_id != scenarios_cases_list[0] and adjust_id not in tax_params and adjust_id == 'factors' and params_tier2['by_factores_fuel']:
-                                    # Call the function to calculate unit taxes using predefined factors for 
-                                    # each tax/tech/fuel and fiscal gaps
-                                    count_wrong_activity_fuel = 0   
-                                    unit_taxes_by_factor, unit_taxes_by_factor_percentage, warning_count = calculate_unit_tax_with_factors_for_fuels(
-                                        year=year_to_adjust,
-                                        dict_scen=dict_scen_2,
-                                        dict_tax_scen=dict_tax_scen,
-                                        dict_activities_out=dict_activities_out,
-                                        fiscal_gaps=fiscal_gaps,
-                                        factors_by_fuel=factors_by_fuel,
-                                        time_vector=time_vector,
-                                        count=count_wrong_activity_fuel,
-                                        params_tier2=params_tier2,
-                                        dict_mult_depr=dict_mult_depr,
-                                        base_dict_scen=base_dict_scen
-                                    )
-                                    # Extract the complete number after underscore
-                                    factor_number = re.search(r'\d+$', columns_factors[col_i]).group()
+                                # elif adjust_id != scenarios_cases_list[0] and adjust_id not in tax_params and adjust_id == 'factors' and params_tier2['by_factores_fuel']:
+                                #     # Call the function to calculate unit taxes using predefined factors for 
+                                #     # each tax/tech/fuel and fiscal gaps
+                                #     count_wrong_activity_fuel = 0   
+                                #     unit_taxes_by_factor, unit_taxes_by_factor_percentage, warning_count = calculate_unit_tax_with_factors_for_fuels(
+                                #         year=year_to_adjust,
+                                #         dict_scen=dict_scen_2,
+                                #         dict_tax_scen=dict_tax_scen,
+                                #         dict_activities_out=dict_activities_out,
+                                #         fiscal_gaps=fiscal_gaps,
+                                #         factors_by_fuel=factors_by_fuel,
+                                #         time_vector=time_vector,
+                                #         count=count_wrong_activity_fuel,
+                                #         params_tier2=params_tier2,
+                                #         dict_mult_depr=dict_mult_depr,
+                                #         base_dict_scen=base_dict_scen
+                                #     )
+                                #     # Extract the complete number after underscore
+                                #     factor_number = re.search(r'\d+$', columns_factors[col_i]).group()
 
-                                    # Include unit taxes of the BAU scenario
-                                    unit_taxes_by_factor.update(unit_taxes_bau)
-                                    unit_taxes_by_factor = changes_tax_keys_unit_taxes_dict(deepcopy(unit_taxes_by_factor))
-                                    filtered_dict_scen[f'{adjust_id}_{factor_number}']= deepcopy(unit_taxes_by_factor)
-                                    unit_taxes_by_factor_percentage.update(unit_taxes_bau_percentage)
-                                    unit_taxes_by_factor_percentage = changes_tax_keys_unit_taxes_dict(deepcopy(unit_taxes_by_factor_percentage))
-                                    filtered_dict_scen_percentage[f'{adjust_id}_{factor_number}']= deepcopy(unit_taxes_by_factor_percentage)
+                                #     # Include unit taxes of the BAU scenario
+                                #     unit_taxes_by_factor.update(unit_taxes_bau)
+                                #     unit_taxes_by_factor = changes_tax_keys_unit_taxes_dict(deepcopy(unit_taxes_by_factor))
+                                #     filtered_dict_scen[f'{adjust_id}_{factor_number}']= deepcopy(unit_taxes_by_factor)
+                                #     unit_taxes_by_factor_percentage.update(unit_taxes_bau_percentage)
+                                #     unit_taxes_by_factor_percentage = changes_tax_keys_unit_taxes_dict(deepcopy(unit_taxes_by_factor_percentage))
+                                #     filtered_dict_scen_percentage[f'{adjust_id}_{factor_number}']= deepcopy(unit_taxes_by_factor_percentage)
     
     
     # Update dict_scen with filtered data by scenario/case

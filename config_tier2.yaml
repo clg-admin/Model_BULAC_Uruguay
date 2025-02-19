@@ -21,12 +21,8 @@
 # 3. by_activity: put the factors for each tax
 # the module distribute according to the
 # activity data of each tech/fuel.
-# 4. by_factores_fuel: put the factors for each
-# tax, tech and fuel and the module respect
-# those factors.
 by_one_tax_by_time: True
 by_activity: True
-by_factores_fuel: False
 
 # This variable indicates if the user want to
 # interpolate the list of the unit taxes or not
@@ -38,4 +34,3 @@ scenarios_cases:
     - base
     - one_tax_by_time
     - factors_by_activity
-    # - factors
