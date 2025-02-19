@@ -1658,8 +1658,6 @@ def calculate_new_accumulated_fleet(t, f, dict_fleet_k, dict_fuel_con, dict_resi
                 this_new_fleet = 0
             else:
                 this_new_fleet = 0 if res_fleet_lst[y] < res_fleet_lst[y-1] else res_fleet_lst[y] - res_fleet_lst[y-1]
-            #     print(res_fleet_lst[y] , res_fleet_lst[y-1])
-            # print(time_vector[y],this_new_fleet)
         else:
             this_new_fleet = tot_fleet_lst[y] - res_fleet_lst[y] - (0 if y == 0 else accum_fleet_lst[y])
         ############################################################
@@ -4442,21 +4440,21 @@ def bulac_engine(base_inputs, dict_database, fut_id, this_hypercube, df_exp,
     '''
     This code the energy balances introduced by the user:
     '''
-    df2_fuel_eq = base_inputs[1]
-    df2_EB = base_inputs[2]
-    df2_InsCap = base_inputs[3]
-    df2_scen_sets = base_inputs[4]
-    df2_sets2pp = base_inputs[5]
-    df2_trans_sets = base_inputs[6]
-    df2_trans_sets_eq = base_inputs[7]
+    # df2_fuel_eq = base_inputs[1]
+    df2_EB = base_inputs[1]
+    df2_InsCap = base_inputs[2]
+    # df2_scen_sets = base_inputs[4]
+    # df2_sets2pp = base_inputs[5]
+    df2_trans_sets = base_inputs[3]
+    df2_trans_sets_eq = base_inputs[4]
     # df2_agr_sets_eq = base_inputs[8]
     # df2_res_sets_eq = base_inputs[9]
     
     # Scenarios sheets:
-    df3_scen = base_inputs[8]
+    df3_scen = base_inputs[5]
     # df3_scen_matrix = base_inputs[9]  # viene de Relac
-    df3_scen_dems = base_inputs[9]
-    df3_tpt_data = base_inputs[10]
+    df3_scen_dems = base_inputs[6]
+    df3_tpt_data = base_inputs[7]
     # df3_agr_data = base_inputs[14]
     # df3_res_data = base_inputs[15]
                                    
@@ -4465,21 +4463,21 @@ def bulac_engine(base_inputs, dict_database, fut_id, this_hypercube, df_exp,
     # df4_rac_data = base_inputs[16]  # nueva!
     # df4_ef_agro_res = base_inputs[17]
     # df4_ar_emi = base_inputs[18]  # nueva!
-    df4_cfs = base_inputs[11]
-    df4_ef = base_inputs[12]
+    df4_cfs = base_inputs[8]
+    df4_ef = base_inputs[9]
     # df4_rac_emi = base_inputs[21]  # nueva!
-    df4_job_fac = base_inputs[13]
-    df4_tran_dist_fac = base_inputs[14]
-    df4_caps_rest = base_inputs[15]
+    df4_job_fac = base_inputs[10]
+    df4_tran_dist_fac = base_inputs[11]
+    df4_caps_rest = base_inputs[12]
     
     # Economic sheets:
-    df5_ext = base_inputs[16]
+    df5_ext = base_inputs[13]
     # d5_res = base_inputs[26]
-    d5_power_techs = base_inputs[17]
-    d5_tpt = base_inputs[18]
+    d5_power_techs = base_inputs[14]
+    d5_tpt = base_inputs[15]
     # d5_agr = base_inputs[29]
     # d5_rac = base_inputs[30]  # nueva!
-    d5_tax = base_inputs[19]
+    d5_tax = base_inputs[16]
     
     # Unpack config dicts
     params_tier2 = params_dict['params_tier2']
@@ -4575,31 +4573,31 @@ def bulac_engine(base_inputs, dict_database, fut_id, this_hypercube, df_exp,
     ini_simu_yr = dict_general_inp['ini_simu_yr']['Value']
 
     ##############################################################################
-    # Process the content of structural sheets:
-    # This code extracts the sets used for energy balancing:
-    list_scen_fuels = df2_scen_sets['Fuel'].tolist()
-    list_scen_fuel_primary_and_secondary = \
-        df2_scen_sets['Primary, Secondary or Power'].tolist()
-    list_scen_fuels_u = list(dict.fromkeys(list_scen_fuels))
-    list_scen_fuels_u_prim_and_sec = []
-    list_scen_fuels_cat_u = []
-    for af in list_scen_fuels_u:
-        this_fuel_idx = list_scen_fuels.index(af)
-        this_fuel_cat = list_scen_fuel_primary_and_secondary[this_fuel_idx]
-        list_scen_fuels_cat_u.append(this_fuel_cat)
-        if this_fuel_cat in ['Primary', 'Secondary']:
-            list_scen_fuels_u_prim_and_sec.append(af)
+    # # Process the content of structural sheets:
+    # # This code extracts the sets used for energy balancing:
+    # list_scen_fuels = df2_scen_sets['Fuel'].tolist()
+    # list_scen_fuel_primary_and_secondary = \
+    #     df2_scen_sets['Primary, Secondary or Power'].tolist()
+    # list_scen_fuels_u = list(dict.fromkeys(list_scen_fuels))
+    # list_scen_fuels_u_prim_and_sec = []
+    # list_scen_fuels_cat_u = []
+    # for af in list_scen_fuels_u:
+    #     this_fuel_idx = list_scen_fuels.index(af)
+    #     this_fuel_cat = list_scen_fuel_primary_and_secondary[this_fuel_idx]
+    #     list_scen_fuels_cat_u.append(this_fuel_cat)
+    #     if this_fuel_cat in ['Primary', 'Secondary']:
+    #         list_scen_fuels_u_prim_and_sec.append(af)
             
-    # This code extracts sets to connect power plants to energy balance:
-    dict_equiv_pp_fuel = {}
-    dict_equiv_pp_fuel_rev = {}
-    for n in range(len(df2_sets2pp['Technology'])):
-        dict_equiv_pp_fuel.update(
-            {df2_sets2pp['Technology'][n]:\
-             df2_sets2pp['Fuel'][n]})
-        dict_equiv_pp_fuel_rev.update(
-            {df2_sets2pp['Fuel'][n]:\
-             df2_sets2pp['Technology'][n]})
+    # # This code extracts sets to connect power plants to energy balance:
+    # dict_equiv_pp_fuel = {}
+    # dict_equiv_pp_fuel_rev = {}
+    # for n in range(len(df2_sets2pp['Technology'])):
+    #     dict_equiv_pp_fuel.update(
+    #         {df2_sets2pp['Technology'][n]:\
+    #          df2_sets2pp['Fuel'][n]})
+    #     dict_equiv_pp_fuel_rev.update(
+    #         {df2_sets2pp['Fuel'][n]:\
+    #          df2_sets2pp['Technology'][n]})
     
     # This code extracts the transport sets and its structure:
     list_trn_type = df2_trans_sets['Type'].tolist()
@@ -4643,13 +4641,13 @@ def bulac_engine(base_inputs, dict_database, fut_id, this_hypercube, df_exp,
                 list_trn_types = df_transport_t_and_f['Type'].tolist()
                 dict_trn_nest[this_l1].update({this_l2:deepcopy(list_trn_types)})
     			 
-    # This code extracts set change equivalence:
-    pack_fe = {'new2old':{}, 'old2new':{}}
-    for n in range(len(df2_fuel_eq['OLADE_structure'].tolist())):
-        old_struc = df2_fuel_eq['OLADE_structure'].tolist()[n]
-        new_struc = df2_fuel_eq['New_structure'].tolist()[n]
-        pack_fe['new2old'].update({new_struc: old_struc})
-        pack_fe['old2new'].update({old_struc: new_struc})
+    # # This code extracts set change equivalence:
+    # pack_fe = {'new2old':{}, 'old2new':{}}
+    # for n in range(len(df2_fuel_eq['OLADE_structure'].tolist())):
+    #     old_struc = df2_fuel_eq['OLADE_structure'].tolist()[n]
+    #     new_struc = df2_fuel_eq['New_structure'].tolist()[n]
+    #     pack_fe['new2old'].update({new_struc: old_struc})
+    #     pack_fe['old2new'].update({old_struc: new_struc})
     
     # we have to open the first data frame:
     # 1) list all the unique elements from the "df3_tpt_data" parameters:

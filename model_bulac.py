@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Mon Sep 13, 2021
-Last updated: Jan. 19, 2025
+Last updated: Feb. 10, 2025
 
 @author: Climate Lead Group; Luis Victor-Gallardo, Jairo Quirós-Tortós,
         Andrey Salazar-Vargas
@@ -274,11 +274,11 @@ df1_general = pd.read_excel(di_nam, sheet_name="2_general")
 '''
 This code the energy balances introduced by the user:
 '''
-df2_fuel_eq = pd.read_excel(di_nam, sheet_name="3_FUEQ")
+# df2_fuel_eq = pd.read_excel(di_nam, sheet_name="3_FUEQ")
 df2_EB = pd.read_excel(di_nam, sheet_name="4_EB")
 df2_InsCap = pd.read_excel(di_nam, sheet_name="5_InsCap")
-df2_scen_sets = pd.read_excel(di_nam, sheet_name="6_scen_sets")
-df2_sets2pp = pd.read_excel(di_nam, sheet_name="7_set2pp")
+# df2_scen_sets = pd.read_excel(di_nam, sheet_name="6_scen_sets")
+# df2_sets2pp = pd.read_excel(di_nam, sheet_name="7_set2pp")
 df2_trans_sets = pd.read_excel(di_nam, sheet_name="8_trans_sets")
 df2_trans_sets_eq = pd.read_excel(di_nam, sheet_name="9_trans_sets_eq")
 # df2_agr_sets_eq = pd.read_excel(di_nam, sheet_name="10_agro_sets")
@@ -397,30 +397,30 @@ ini_simu_yr = dict_general_inp['ini_simu_yr']['Value']
 ##############################################################################
 # Process the content of structural sheets:
 
-# This code extracts the sets used for energy balancing:
-list_scen_fuels = df2_scen_sets['Fuel'].tolist()
-list_scen_fuel_primary_and_secondary = \
-    df2_scen_sets['Primary, Secondary or Power'].tolist()
-list_scen_fuels_u = list(dict.fromkeys(list_scen_fuels))
-list_scen_fuels_u_prim_and_sec = []
-list_scen_fuels_cat_u = []
-for af in list_scen_fuels_u:
-    this_fuel_idx = list_scen_fuels.index(af)
-    this_fuel_cat = list_scen_fuel_primary_and_secondary[this_fuel_idx]
-    list_scen_fuels_cat_u.append(this_fuel_cat)
-    if this_fuel_cat in ['Primary', 'Secondary']:
-        list_scen_fuels_u_prim_and_sec.append(af)
+# # This code extracts the sets used for energy balancing:
+# list_scen_fuels = df2_scen_sets['Fuel'].tolist()
+# list_scen_fuel_primary_and_secondary = \
+#     df2_scen_sets['Primary, Secondary or Power'].tolist()
+# list_scen_fuels_u = list(dict.fromkeys(list_scen_fuels))
+# list_scen_fuels_u_prim_and_sec = []
+# list_scen_fuels_cat_u = []
+# for af in list_scen_fuels_u:
+#     this_fuel_idx = list_scen_fuels.index(af)
+#     this_fuel_cat = list_scen_fuel_primary_and_secondary[this_fuel_idx]
+#     list_scen_fuels_cat_u.append(this_fuel_cat)
+#     if this_fuel_cat in ['Primary', 'Secondary']:
+#         list_scen_fuels_u_prim_and_sec.append(af)
         
 # This code extracts sets to connect power plants to energy balance:
 dict_equiv_pp_fuel = {}
 dict_equiv_pp_fuel_rev = {}
-for n in range(len(df2_sets2pp['Technology'])):
-    dict_equiv_pp_fuel.update(
-        {df2_sets2pp['Technology'][n]:\
-         df2_sets2pp['Fuel'][n]})
-    dict_equiv_pp_fuel_rev.update(
-        {df2_sets2pp['Fuel'][n]:\
-         df2_sets2pp['Technology'][n]})
+# for n in range(len(df2_sets2pp['Technology'])):
+#     dict_equiv_pp_fuel.update(
+#         {df2_sets2pp['Technology'][n]:\
+#          df2_sets2pp['Fuel'][n]})
+#     dict_equiv_pp_fuel_rev.update(
+#         {df2_sets2pp['Fuel'][n]:\
+#          df2_sets2pp['Technology'][n]})
 
 # This code extracts the transport sets and its structure:
 list_trn_type = df2_trans_sets['Type'].tolist()
@@ -466,11 +466,11 @@ for l1 in range(len(list_trn_lvl1_u)):
 
 # This code extracts set change equivalence:
 pack_fe = {'new2old':{}, 'old2new':{}}
-for n in range(len(df2_fuel_eq['OLADE_structure'].tolist())):
-    old_struc = df2_fuel_eq['OLADE_structure'].tolist()[n]
-    new_struc = df2_fuel_eq['New_structure'].tolist()[n]
-    pack_fe['new2old'].update({new_struc: old_struc})
-    pack_fe['old2new'].update({old_struc: new_struc})
+# for n in range(len(df2_fuel_eq['OLADE_structure'].tolist())):
+#     old_struc = df2_fuel_eq['OLADE_structure'].tolist()[n]
+#     new_struc = df2_fuel_eq['New_structure'].tolist()[n]
+#     pack_fe['new2old'].update({new_struc: old_struc})
+#     pack_fe['old2new'].update({old_struc: new_struc})
 
 # we have to open the first data frame:
 # 1) list all the unique elements from the "df3_tpt_data" parameters:
@@ -4921,6 +4921,7 @@ for s in range(len(scenario_list)):
                 # *********************************************************
                 # We can calculate the required new fleets to satisfy the demand:
                 dict_new_fleet_k, dict_accum_new_fleet_k = {}, {}
+                dict_accum_fleet_k = {}
     
                 # We will take advantage to estimate the costs related to
                 # fleet and energy; we can check the cost and tax params:
@@ -4988,8 +4989,6 @@ for s in range(len(scenario_list)):
                     
                     # make an exception to Uruguay 2025, check this change after
                     ############################################################
-                    # growth_rate_fleet = [0] + [0 if tot_fleet_lst[i-1] <= 0 else (tot_fleet_lst[i] - tot_fleet_lst[i-1]) / tot_fleet_lst[i-1] 
-                    #        for i in range(1, len(tot_fleet_lst))]
                     years_exception_temp_fix = [2021,2022,2023]
                     ############################################################
                 
@@ -5003,20 +5002,18 @@ for s in range(len(scenario_list)):
                             else:
                                 this_new_fleet = 0 if tot_fleet_lst[y] < res_fleet_lst[y-1] else tot_fleet_lst[y] - res_fleet_lst[y-1]
                         else:
-                            
-                            # tot_fleet_lst[y] = tot_fleet_lst[y-1] + tot_fleet_lst[y-1]*growth_rate_fleet[y]
                             this_new_fleet = tot_fleet_lst[y] - res_fleet_lst[y] - (0 if y == 0 else accum_fleet_lst[y])
                         ############################################################
                         
                         # this_new_fleet = tot_fleet_lst[y] - res_fleet_lst[y] - (0 if y == 0 else accum_fleet_lst[y])
                         
-                        if time_vector[y] == 2033 and t == 'Automoviles' and f == 'GASOLINA/ALCOHOL':
-                            print(this_scen)
+                        # if time_vector[y] == 2033 and t == 'Automoviles' and f == 'GASOLINA/ALCOHOL':
+                        #     print(this_scen)
                         #     print('y:',y)
-                            # print('time_vector[y]:',time_vector[y])
-                            print('tot_fleet_lst[y]:',tot_fleet_lst[y])
-                            print('res_fleet_lst[y]:',res_fleet_lst[y])
-                            print('this_new_fleet:',this_new_fleet)
+                        #     # print('time_vector[y]:',time_vector[y])
+                        #     print('tot_fleet_lst[y]:',tot_fleet_lst[y])
+                        #     print('res_fleet_lst[y]:',res_fleet_lst[y])
+                        #     print('this_new_fleet:',this_new_fleet)
                         #     print('accum_fleet_lst[y]:',accum_fleet_lst[y])
                         #     print('accum_fleet_lst:',accum_fleet_lst)
                             # print(new_fleet_lst[y])
@@ -5031,13 +5028,6 @@ for s in range(len(scenario_list)):
                             for y2 in range(y, y + int(list_op_life[y])):
                                 if y2 < len(time_vector):
                                     accum_fleet_lst[y2] += this_new_fleet
-                                    # if this_scen == 'BAU' and 2025 <= time_vector[y] <= 2033 and t == 'CamionesA' and f == 'DIESEL OIL':
-                                    #     print(y, list_op_life[y],y2, accum_fleet_lst[y2],this_new_fleet)
-                            # if this_scen == 'BAU' and time_vector[y] and t == 'CamionesA' and f == 'DIESEL OIL':
-                            #     if time_vector[y] == 2050:
-                            #         sys.exit()
-                        # elif this_new_fleet <0:
-                        #     new_fleet_lst[y] = -this_new_fleet
                         else:
                             times_neg_new_fleet += 1
                             times_neg_new_fleet_sto.append(this_new_fleet)
@@ -5210,6 +5200,7 @@ for s in range(len(scenario_list)):
                     dict_capex_out[t] = {}
                     dict_fopex_out[t] = {}
                     dict_vopex_out[t] = {}
+                    dict_accum_fleet_k[t] = {}
                     
                     for f in fuels:
                         # Assuming fun_unpack_costs and other necessary functions are defined
@@ -5243,6 +5234,7 @@ for s in range(len(scenario_list)):
                         dict_fopex_out[t][f] = usd_fopex_lst
                         dict_vopex_out[t][f] = usd_vopex_lst
                         dict_conv_cons[t][f] = conv_cons
+                        dict_accum_fleet_k[t][f] = accum_fleet_lst
                         # if t == 'Birodados' and f == 'ELECTRICIDAD':
                         #     print(this_scen,usd_capex_lst)
 
@@ -8087,6 +8079,8 @@ for s in range(len(scenario_list)):
 
                 dict_local_country[this_country].update({'Fleet': deepcopy(dict_fleet_k)})
                 dict_local_country[this_country].update({'New Fleet': deepcopy(dict_new_fleet_k)})
+                dict_local_country[this_country].update({'Accumulated Fleet': deepcopy(dict_accum_fleet_k)})
+                dict_local_country[this_country].update({'Residual Fleet': deepcopy(dict_resi_cap_trn)})
                 dict_local_country[this_country].update({'Fuel Consumption': deepcopy(dict_fuel_consump)})
                 dict_local_country[this_country].update({'Conversion Fuel Constant': deepcopy(dict_conv_fuel_cts)})
                 dict_local_country[this_country].update({'Transport CAPEX [$]': deepcopy(dict_capex_out)})
@@ -9121,7 +9115,9 @@ list_outputs = [
     'Unit Tax Tasa_Consular',  # 26
     'Unit Tax Rodaje',  # 27
     'Fuel Consumption', # 28
-    'Conversion Fuel Constant' # 29
+    'Conversion Fuel Constant', # 29
+    'Accumulated Fleet',
+    'Residual Fleet'
 ]
 
 list_inputs_add = [i + ' (input)' for i in list_inputs]
@@ -9298,7 +9294,7 @@ if overwrite_transport_model:
     list_fuel_clean += list(dict_eq_transport_fuels.keys())
 list_fuel_clean += ['']
 
-output_lists = {f'h_o{i}': [] for i in range(1, 30)}
+output_lists = {f'h_o{i}': [] for i in range(1, 32)}
 input_lists = {f'h_i{i}': [] for i in range(1, 6)}
 
 print('\n')
@@ -9378,10 +9374,10 @@ for sc in range(len(cases_list)):
                             # Lists of IDs for case conditions
                             list_output_01 = []
                             list_output_10 = []
-                            list_output_00 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28,29]
+                            list_output_00 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28,29,30,31]
                             list_output_11 = []
                             
-                            for output_id in range(1, 30):  # Loop for all outputs, the second number y one more than the last output
+                            for output_id in range(1, 32):  # Loop for all outputs, the second number y one more than the last output
     
                                 # Conditions to select the correct case condition for combination of "fuel" and "tech"                        
                                 if output_id in list_output_01:
@@ -9416,7 +9412,7 @@ for sc in range(len(cases_list)):
                                 #     scd_key = fuel
                                 #     thd_key = y
                                 #     fth_key = None
-                                if output_id in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28]:
+                                if output_id in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28,30,31]:
                                     # Case 'four' 1
                                     case_type = 'four'
                                     fst_key = list_outputs[output_id - 1]
@@ -9441,11 +9437,11 @@ for sc in range(len(cases_list)):
                                 # Process outputs                            
                                 count_empties, output_lists[f'h_o{output_id}'] = handle_processes(count_empties, output_lists[f'h_o{output_id}'], this_data_dict, fuel, tech, case_condition, case_type, fst_key, scd_key, thd_key, fth_key)
                                                         
-                            if count_empties == 34:  # gotta pop, because it is an empty row:
+                            if count_empties == 36:  # gotta pop, because it is an empty row:
                                 # Inputs
                                 input_lists = pop_last_from_inputs(input_lists, range(1, 6))
                                 # Outputs
-                                output_lists = pop_last_from_outputs(output_lists, range(1, 30))
+                                output_lists = pop_last_from_outputs(output_lists, range(1, 32))
     
                             else:
                                 h_scenario.append(this_scen_case)
@@ -9462,7 +9458,7 @@ for sc in range(len(cases_list)):
 
 variable_names = \
     [f'h_i{i}' for i in range(1, 6)] + \
-    [f'h_o{i}' for i in range(1, 30)]
+    [f'h_o{i}' for i in range(1, 32)]
 
 # Construct list_variables by accessing dictionaries
 list_inputs_variables = [input_lists[var_name] for var_name in variable_names if var_name in input_lists]

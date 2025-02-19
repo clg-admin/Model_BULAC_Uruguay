@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Created: Sep 13, 2021
-Last updated: Jan. 19, 2025
+Last updated: Feb. 10, 2025
 
 @author: Climate Lead Group; Luis Victor-Gallardo, Jairo Quirós-Tortós,
         Andrey Salazar-Vargas
@@ -66,11 +66,11 @@ if __name__ == '__main__':
     '''
     This code the energy balances introduced by the user:
     '''
-    df2_fuel_eq = pd.read_excel(di_nam, sheet_name="3_FUEQ")
+    # df2_fuel_eq = pd.read_excel(di_nam, sheet_name="3_FUEQ")
     df2_EB = pd.read_excel(di_nam, sheet_name="4_EB")
     df2_InsCap = pd.read_excel(di_nam, sheet_name="5_InsCap")
-    df2_scen_sets = pd.read_excel(di_nam, sheet_name="6_scen_sets")
-    df2_sets2pp = pd.read_excel(di_nam, sheet_name="7_set2pp")
+    # df2_scen_sets = pd.read_excel(di_nam, sheet_name="6_scen_sets")
+    # df2_sets2pp = pd.read_excel(di_nam, sheet_name="7_set2pp")
     df2_trans_sets = pd.read_excel(di_nam, sheet_name="8_trans_sets")
     df2_trans_sets_eq = pd.read_excel(di_nam, sheet_name="9_trans_sets_eq")
     # df2_agr_sets_eq = pd.read_excel(di_nam, sheet_name="10_agro_sets")
@@ -108,11 +108,11 @@ if __name__ == '__main__':
     # Define base inputs AND open the reference data bases.
     base_inputs = [
         df1_general,
-        df2_fuel_eq,
+        # df2_fuel_eq,
         df2_EB, 
         df2_InsCap,
-        df2_scen_sets,
-        df2_sets2pp, 
+        # df2_scen_sets,
+        # df2_sets2pp, 
         df2_trans_sets,
         df2_trans_sets_eq,
         # df2_agr_sets_eq,
