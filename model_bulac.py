@@ -541,7 +541,7 @@ scenarios_cases_list = params_tier2['scenarios_cases']
 scenario_list = list(set(df3_scen['Scenario'].tolist()))
 scenario_list.remove('ALL')
 scenario_list.sort()
-scenarios_exceptions = ['ACELERADO', 'ASPIRACIONAL']
+scenarios_exceptions = ['ACELERADO', 'ALTERNATIVO']
 for scen_del in scenarios_exceptions:
     if scen_del in scenario_list:
         scenario_list.remove(scen_del)
@@ -3996,7 +3996,6 @@ for s in range(len(scenario_list)):
                         dem_by_value = fby * km * lf / 1e9
                         dem_by[trn_type] = dem_by_value
                         sum_dem_by += dem_by_value
-                        # print(trn_type,fby, km, lf)
                         
                     dem_sh = {trn_type: 100 * dem_by_value / sum_dem_by for trn_type, dem_by_value in dem_by.items()}
                     
@@ -4009,32 +4008,34 @@ for s in range(len(scenario_list)):
                 
                 # For Passenger trains
                 list_pass_trn = filter_transport_types(list_trn_type, list_trn_lvl1_u_raw, 'Passenger')
-                set_pass_trn_fleet_by, set_pass_trn_dem_by, set_pass_trn_dem_sh, sum_pass_trn_dem_by = update_dictionaries(list_pass_trn, df_trn_data, this_country, per_first_yr, dict_lf, dict_km,per_first_yr)
-                
-                # make an exception to Uruguay 2025, check this change after
-                ############################################################
-                years_exception_temp_fix = [2021,2022,2023]
-                list_excep_sum_pass_trn_dem_by = []
-                list_excep_set_pass_trn_fleet_by1 = []
-                for ye in years_exception_temp_fix:
-                    set_pass_trn_fleet_by1, set_pass_trn_dem_by1, set_pass_trn_dem_sh1, sum_pass_trn_dem_by1 = update_dictionaries(list_pass_trn, df_trn_data, this_country, ye, dict_lf, dict_km,per_first_yr)
-                    list_excep_sum_pass_trn_dem_by.append(sum_pass_trn_dem_by1)
-                    list_excep_set_pass_trn_fleet_by1.append(set_pass_trn_fleet_by1)
-                ############################################################
+                # set_pass_trn_fleet_by, set_pass_trn_dem_by, set_pass_trn_dem_sh, sum_pass_trn_dem_by = update_dictionaries(list_pass_trn, df_trn_data, this_country, per_first_yr, dict_lf, dict_km,per_first_yr)
                 
                 # For Freight trains
                 list_fre_trn = filter_transport_types(list_trn_type, list_trn_lvl1_u_raw, 'Freight')
-                set_fre_trn_fleet_by, set_fre_trn_dem_by, set_fre_trn_dem_sh, sum_fre_trn_dem_by = update_dictionaries(list_fre_trn, df_trn_data, this_country, per_first_yr, dict_lf, dict_km,per_first_yr)
+                # set_fre_trn_fleet_by, set_fre_trn_dem_by, set_fre_trn_dem_sh, sum_fre_trn_dem_by = update_dictionaries(list_fre_trn, df_trn_data, this_country, per_first_yr, dict_lf, dict_km,per_first_yr)
 
+                
                 # make an exception to Uruguay 2025, check this change after
                 ############################################################
                 years_exception_temp_fix = [2021,2022,2023]
-                list_excep_sum_fre_trn_dem_by = []
-                list_excep_set_fre_trn_fleet_by1 = []
+                list_excep_sum_pass_trn_dem_by = {}
+                list_excep_set_pass_trn_fleet_by1 = {}
+                list_excep_set_pass_trn_dem_sh1 = {}
+                
+                list_excep_sum_fre_trn_dem_by = {}
+                list_excep_set_fre_trn_fleet_by1 = {}
+                list_excep_set_fre_trn_dem_sh1 = {}
+                
                 for ye in years_exception_temp_fix:
-                    set_fre_trn_fleet_by1, set_fre_trn_dem_by1, set_fre_trn_dem_sh1, sum_fre_trn_dem_by1 = update_dictionaries(list_fre_trn, df_trn_data, this_country, ye, dict_lf, dict_km,per_first_yr)
-                    list_excep_sum_fre_trn_dem_by.append(sum_fre_trn_dem_by1)
-                    list_excep_set_fre_trn_fleet_by1.append(set_fre_trn_fleet_by1)
+                    set_pass_trn_fleet_by, set_pass_trn_dem_by, set_pass_trn_dem_sh, sum_pass_trn_dem_by = update_dictionaries(list_pass_trn, df_trn_data, this_country, ye, dict_lf, dict_km,per_first_yr)
+                    list_excep_sum_pass_trn_dem_by[ye] = sum_pass_trn_dem_by
+                    list_excep_set_pass_trn_fleet_by1[ye] = set_pass_trn_fleet_by
+                    list_excep_set_pass_trn_dem_sh1[ye] = set_pass_trn_dem_sh
+
+                    set_fre_trn_fleet_by, set_fre_trn_dem_by, set_fre_trn_dem_sh, sum_fre_trn_dem_by = update_dictionaries(list_fre_trn, df_trn_data, this_country, ye, dict_lf, dict_km,per_first_yr)
+                    list_excep_sum_fre_trn_dem_by[ye] = sum_fre_trn_dem_by
+                    list_excep_set_fre_trn_fleet_by1[ye] = set_fre_trn_fleet_by
+                    list_excep_set_fre_trn_dem_sh1[ye] = set_fre_trn_dem_sh
                 ############################################################
     
                 # 1.b) estimate the demand growth
@@ -4090,7 +4091,7 @@ for s in range(len(scenario_list)):
                         # make an exception to Uruguay 2025, check this change after
                         ############################################################
                         if time_vector[y] in years_exception_temp_fix:
-                            trn_dem[y] = list_excep_sum_demand_by[y]
+                            trn_dem[y] = list_excep_sum_demand_by[years_exception_temp_fix[y]]
                         ############################################################
                         
                         # if y == 0:
@@ -4142,7 +4143,7 @@ for s in range(len(scenario_list)):
                 # 1.c) apply the mode shift and non-motorized parameters:
 
                 # Function #29
-                def extract_transport_types(transport_level, type_name):
+                def extract_transport_types(list_trn_type,transport_level, type_name):
                     """
                     Extract specific transport types based on the type name.
                     
@@ -4211,17 +4212,34 @@ for s in range(len(scenario_list)):
                     return [dataframe.loc[mask][year].iloc[0] for year in time_vector]
 
                 # Extract transport types
-                set_pass_trn_priv = extract_transport_types(list_trn_lvl2_u_raw, 'Private')
-                set_pass_trn_pub = extract_transport_types(list_trn_lvl2_u_raw, 'Public')
+                set_pass_trn_priv = extract_transport_types(list_trn_type,list_trn_lvl2_u_raw, 'Private')
+                set_pass_trn_pub = extract_transport_types(list_trn_type,list_trn_lvl2_u_raw, 'Public')
                 
                 # Calculate demand shares
-                pass_trn_dem_sh_private = calculate_demand_share(set_pass_trn_priv, set_pass_trn_dem_sh)
-                pass_trn_dem_sh_public = calculate_demand_share(set_pass_trn_pub, set_pass_trn_dem_sh)
+                # pass_trn_dem_sh_private = calculate_demand_share(set_pass_trn_priv, set_pass_trn_dem_sh)
+                # pass_trn_dem_sh_public = calculate_demand_share(set_pass_trn_pub, set_pass_trn_dem_sh)
                 
-                # Adjust demand shares
-                pass_trn_dem_sh_private_k = adjust_demand_share(set_pass_trn_priv, set_pass_trn_dem_sh, pass_trn_dem_sh_private)
-                pass_trn_dem_sh_public_k = adjust_demand_share(set_pass_trn_pub, set_pass_trn_dem_sh, pass_trn_dem_sh_public)
-
+                # # Adjust demand shares
+                # pass_trn_dem_sh_private_k = adjust_demand_share(set_pass_trn_priv, set_pass_trn_dem_sh, pass_trn_dem_sh_private)
+                # pass_trn_dem_sh_public_k = adjust_demand_share(set_pass_trn_pub, set_pass_trn_dem_sh, pass_trn_dem_sh_public)
+                
+                # make an exception to Uruguay 2025, check this change after
+                ############################################################
+                pass_trn_dem_sh_private_dict = {}
+                pass_trn_dem_sh_public_dict = {}
+                pass_trn_dem_sh_private_k_dict = {}
+                pass_trn_dem_sh_public_k_dict = {}
+                for ye in years_exception_temp_fix:
+                    # Calculate demand shares
+                    pass_trn_dem_sh_private_dict[ye] = calculate_demand_share(set_pass_trn_priv, list_excep_set_pass_trn_dem_sh1[ye])
+                    pass_trn_dem_sh_public_dict[ye] = calculate_demand_share(set_pass_trn_pub, list_excep_set_pass_trn_dem_sh1[ye])
+                    
+                    # Adjust demand shares
+                    pass_trn_dem_sh_private_k_dict[ye] = adjust_demand_share(set_pass_trn_priv, list_excep_set_pass_trn_dem_sh1[ye], pass_trn_dem_sh_private_dict[ye])
+                    pass_trn_dem_sh_public_k_dict[ye] = adjust_demand_share(set_pass_trn_pub, list_excep_set_pass_trn_dem_sh1[ye], pass_trn_dem_sh_public_dict[ye])
+                    
+                ############################################################
+                
                 # Extract data from dataframe based on conditions
                 list_mode_shift = extract_data_from_dataframe((df_trn_data['Parameter'] == 'Mode shift'), time_vector, df_trn_data)
                 list_non_motorized = extract_data_from_dataframe((df_trn_data['Parameter'] == 'Non-motorized transport'), time_vector, df_trn_data)
@@ -4244,9 +4262,9 @@ for s in range(len(scenario_list)):
                         this_gpkm_k = this_gpkm * sh_k_adj / 100
                         gpkm_k[t].append(this_gpkm_k)
                     lp.append(this_gpkm_k)             
-
+                    
                 # Function #34
-                def calculate_gpkm_for_types(time_vector, demand, priv_adj_share, pub_adj_share, mode_shift, non_motorized, priv_types, pub_types):
+                def calculate_gpkm_for_types(time_vector, demand, priv_adj_share, pub_adj_share, mode_shift, non_motorized, priv_types, pub_types, pass_trn_dem_sh_private, pass_trn_dem_sh_public):
                     """
                     Calculate gpkm (passenger or freight kilometers) for various transport types across the time vector, accounting for mode shifts and non-motorized transport.
                     
@@ -4288,17 +4306,95 @@ for s in range(len(scenario_list)):
                 
                     return gpkm_pri_k, gpkm_pub_k, gpkm_nonmot, lpriv, lpub
                 
+                # make an exception to Uruguay 2025, check this change after
+                ############################################################
+                # Function #34.1
+                def calculate_gpkm_for_types1(time_vector, demand, priv_adj_share_dict, pub_adj_share_dict, mode_shift, non_motorized, priv_types, pub_types, pass_trn_dem_sh_private_dict, pass_trn_dem_sh_public_dict, years_exception_temp_fix):
+                    """
+                    Calculate gpkm (passenger or freight kilometers) for various transport types across the time vector, accounting for mode shifts and non-motorized transport.
+                    
+                    Args:
+                    - time_vector (list): List of years for which the calculations are performed.
+                    - demand (list): List of demand values for each year.
+                    - priv_adj_share (dict): Dictionary of adjusted share values for private transport types.
+                    - pub_adj_share (dict): Dictionary of adjusted share values for public transport types.
+                    - mode_shift (list): List of mode shift values for each year.
+                    - non_motorized (list): List of non-motorized transport values for each year.
+                    - priv_types (list): List of private transport types.
+                    - pub_types (list): List of public transport types.
+                    
+                    Returns:
+                    - gpkm_pri_k (dict): Dictionary with computed gpkm values for private types, keyed by transport type.
+                    - gpkm_pub_k (dict): Dictionary with computed gpkm values for public types, keyed by transport type.
+                    - gpkm_nonmot (list): List of computed gpkm values for non-motorized transport for each year.
+                    - lpriv (list): List of total gpkm values for private types for each year.
+                    - lpub (list): List of total gpkm values for public types for each year.
+                    """
+                    gpkm_pri_k = {key: [] for key in priv_types}
+                    gpkm_pub_k = {key: [] for key in pub_types}
+                    gpkm_nonmot = []
+                    lpub =[]
+                    lpriv = []
+                    
+                    for y in range(len(time_vector)):
+                        if time_vector[y] in years_exception_temp_fix:
+                            pass_trn_dem_sh_private = pass_trn_dem_sh_private_dict[years_exception_temp_fix[y]]
+                            pass_trn_dem_sh_public = pass_trn_dem_sh_public_dict[years_exception_temp_fix[y]]
+                            priv_adj_share = priv_adj_share_dict[years_exception_temp_fix[y]]
+                            pub_adj_share = pub_adj_share_dict[years_exception_temp_fix[y]]
+                        else:
+                            pass_trn_dem_sh_private = pass_trn_dem_sh_private_dict[years_exception_temp_fix[-1]]
+                            pass_trn_dem_sh_public = pass_trn_dem_sh_public_dict[years_exception_temp_fix[-1]]
+                            priv_adj_share = priv_adj_share_dict[years_exception_temp_fix[-1]]
+                            pub_adj_share = pub_adj_share_dict[years_exception_temp_fix[-1]]
+                        
+                        # For private types
+                        this_gpkm_priv = demand[y] * (pass_trn_dem_sh_private - mode_shift[y] - non_motorized[y]) / 100
+                        calculate_gpkm(this_gpkm_priv, priv_types, priv_adj_share, y, gpkm_pri_k, lpriv)
+
+                        # For public types
+                        this_gpkm_pub = demand[y] * (pass_trn_dem_sh_public + mode_shift[y]) / 100
+                        calculate_gpkm(this_gpkm_pub, pub_types, pub_adj_share, y, gpkm_pub_k, lpub)
+                
+                        # For non-motorized types
+                        this_gpkm_nonmot = demand[y] * (non_motorized[-1])
+                        gpkm_nonmot.append(this_gpkm_nonmot)
+                
+                    return gpkm_pri_k, gpkm_pub_k, gpkm_nonmot, lpriv, lpub
+                ############################################################
+                
                 # Use the function to calculate gpkm for various transport types
-                gpkm_pri_k, gpkm_pub_k, gpkm_nonmot, lpriv, lpub = calculate_gpkm_for_types(
+                # gpkm_pri_k, gpkm_pub_k, gpkm_nonmot, lpriv, lpub = calculate_gpkm_for_types(
+                #     time_vector,
+                #     pass_trn_dem,
+                #     pass_trn_dem_sh_private_k,
+                #     pass_trn_dem_sh_public_k,
+                #     list_mode_shift,
+                #     list_non_motorized,
+                #     set_pass_trn_priv,
+                #     set_pass_trn_pub,
+                #     pass_trn_dem_sh_private,
+                #     pass_trn_dem_sh_public
+                # )
+                
+                
+                # make an exception to Uruguay 2025, check this change after
+                ############################################################
+                # Use the function to calculate gpkm for various transport types
+                gpkm_pri_k, gpkm_pub_k, gpkm_nonmot, lpriv, lpub = calculate_gpkm_for_types1(
                     time_vector,
                     pass_trn_dem,
-                    pass_trn_dem_sh_private_k,
-                    pass_trn_dem_sh_public_k,
+                    pass_trn_dem_sh_private_k_dict,
+                    pass_trn_dem_sh_public_k_dict,
                     list_mode_shift,
                     list_non_motorized,
                     set_pass_trn_priv,
-                    set_pass_trn_pub
+                    set_pass_trn_pub,
+                    pass_trn_dem_sh_private_dict,
+                    pass_trn_dem_sh_public_dict,
+                    years_exception_temp_fix
                 )
+                ############################################################
     
                 # 1.d) apply the logistics parameters:
                 # Initialize gtkm_freight_k
@@ -4362,8 +4458,43 @@ for s in range(len(scenario_list)):
                 # Using the functions:
                 gtkm_freight_k = {key: [] for key in list_fre_trn}
                 list_logistics = extract_logistics_data(df_trn_data, time_vector, this_country)
-                gtkm_freight_k = compute_freight_values(
-                    list_fre_trn, fre_trn_dem, set_fre_trn_dem_sh)
+                # gtkm_freight_k = compute_freight_values(
+                #     list_fre_trn, fre_trn_dem, set_fre_trn_dem_sh)
+                
+                # make an exception to Uruguay 2025, check this change after
+                ############################################################
+                # Function #37.1
+                def compute_freight_values1(set_fre_trn, fre_trn_dem, set_fre_trn_dem_sh_dict,time_vector,years_exception_temp_fix):
+                    """
+                    Compute freight values (gtkm) for each transportation type based on freight demand and share.
+                    
+                    Args:
+                    - set_fre_trn (set): Set of freight transportation types.
+                    - fre_trn_dem (list): List of total freight demands for each year.
+                    - set_fre_trn_dem_sh (dict): Dictionary with freight demand shares for each transportation type.
+                    
+                    Returns:
+                    - gtkm_freight_k (dict): Dictionary with computed gtkm freight values for each type and year, keyed by transportation type.
+                    """
+                    gtkm_freight_k = {key: [] for key in set_fre_trn}
+                
+                    for y, demand in enumerate(fre_trn_dem):
+                        if time_vector[y] in years_exception_temp_fix:
+                            set_fre_trn_dem_sh = set_fre_trn_dem_sh_dict[time_vector[y]]
+                        else:
+                            set_fre_trn_dem_sh = set_fre_trn_dem_sh_dict[years_exception_temp_fix[-1]]
+                        for freight_type in set_fre_trn:
+                            this_fre_sh_k = set_fre_trn_dem_sh[freight_type]
+                            this_fre_k = demand * this_fre_sh_k / 100
+                            gtkm_freight_k[freight_type].append(this_fre_k)
+                
+                    return gtkm_freight_k
+                
+                gtkm_freight_k = compute_freight_values1(
+                    list_fre_trn, fre_trn_dem, list_excep_set_fre_trn_dem_sh1,
+                    time_vector,years_exception_temp_fix)
+                
+                ############################################################
 
                 # TM 2) Estimate the required energy for transport
                 """
@@ -4452,13 +4583,35 @@ for s in range(len(scenario_list)):
                     return fleet_by_sh, dict_resi_fleet
 
                 
-                set_pass_trn_fleet_by_sh, dict_resi_cap_trn_V_pass = calculate_fleet_shares_by_vehicle_type(
-                    types_pass, fuels, df_trn_data, this_country, per_first_yr, time_vector, set_pass_trn_fleet_by
-                )
+                # set_pass_trn_fleet_by_sh, dict_resi_cap_trn_V_pass = calculate_fleet_shares_by_vehicle_type(
+                #     types_pass, fuels, df_trn_data, this_country, per_first_yr, time_vector, set_pass_trn_fleet_by
+                # )
                 
-                set_fre_trn_fleet_by_sh, dict_resi_cap_trn_V_fre = calculate_fleet_shares_by_vehicle_type(
-                    types_fre, fuels, df_trn_data, this_country, per_first_yr, time_vector, set_fre_trn_fleet_by
-                )
+                # set_fre_trn_fleet_by_sh, dict_resi_cap_trn_V_fre = calculate_fleet_shares_by_vehicle_type(
+                #     types_fre, fuels, df_trn_data, this_country, per_first_yr, time_vector, set_fre_trn_fleet_by
+                # )
+                
+                # make an exception to Uruguay 2025, check this change after
+                ############################################################
+                
+                '''REVIEW THE CALCULATIONS OF THE FOLLOWING TWO DICTIONARIES'''
+                
+                set_pass_trn_fleet_by_sh_dict = {}
+                set_fre_trn_fleet_by_sh_dict = {}
+                for ye in years_exception_temp_fix:
+
+                    set_pass_trn_fleet_by_sh_dict[ye], dict_resi_cap_trn_V_pass = calculate_fleet_shares_by_vehicle_type(
+                        types_pass, fuels, df_trn_data, this_country, ye, time_vector, list_excep_set_pass_trn_fleet_by1[ye]
+                    )
+
+                    set_fre_trn_fleet_by_sh_dict[ye], dict_resi_cap_trn_V_fre = calculate_fleet_shares_by_vehicle_type(
+                        types_fre, fuels, df_trn_data, this_country, ye, time_vector, list_excep_set_fre_trn_fleet_by1[ye]
+                    )
+
+                #print('check the effects of ye iteration')
+                #sys.exit()
+
+                ############################################################
 
                 # Merging the dictionaries for residual fleet capacities
                 dict_resi_cap_trn = {**dict_resi_cap_trn_V_pass, **dict_resi_cap_trn_V_fre}
@@ -4570,25 +4723,87 @@ for s in range(len(scenario_list)):
                     
                     return list_fe_k, list_nonele_fleet_k
                 
+                # make an exception to Uruguay 2025, check this change after
+                ############################################################
+                # Function #42.1
+                def update_fuel_economy_and_fleet_1(df, fuels, fuels_nonelectric, sh_non_electric_k_dict, list_non_electric, this_country, t, time_vector, years_exception_temp_fix):
+                    """
+                    Update fuel economy and fleet information for each fuel type based on non-electric shares and other factors.
+                    
+                    Args:
+                    - df (DataFrame): DataFrame containing transportation data.
+                    - fuels (list): List of all fuel types.
+                    - fuels_nonelectric (list): List of non-electric fuel types.
+                    - sh_non_electric_k_dict (dict): Dictionary of shares for non-electric fuels.
+                    - list_non_electric (list): List of non-electric fleet data.
+                    - this_country (str): Target country for data extraction.
+                    - t (str): The specific transport type.
+                    - time_vector (list): List of years for which the calculations are performed.
+                    
+                    Returns:
+                    - list_fe_k (dict): Dictionary of fuel economy values by fuel type.
+                    - list_nonele_fleet_k (dict): Dictionary of non-electric fleet data by fuel type.
+                    """
+                    list_fe_k = {}
+                    list_nonele_fleet_k = {}
+                    for af in fuels:
+                        list_fe_k[af] = []
+                        if af in fuels_nonelectric:
+                            list_nonele_fleet_k[af] = []
+                
+                    for y in range(len(time_vector)):
+                        if time_vector[y] in years_exception_temp_fix:
+                            sh_non_electric_k = sh_non_electric_k_dict[years_exception_temp_fix[y]]
+                        else:
+                            sh_non_electric_k = sh_non_electric_k_dict[years_exception_temp_fix[-1]]
+                        for af in fuels_nonelectric:
+                            this_sh_ne_k = sh_non_electric_k[af]
+                            this_fleet_ne_k = this_sh_ne_k * list_non_electric[y] / 100
+                            list_nonele_fleet_k[af].append(this_fleet_ne_k)
+                
+                        for af in fuels:
+                            value = get_parameter_values(df, this_country, t, 'Fuel economy', [time_vector[y]], af)[0]
+                            list_fe_k[af].append(value)
+                    
+                    return list_fe_k, list_nonele_fleet_k
+                ############################################################
+            
                 # The main loop where modularized functions will be used
                 dict_fuel_economy = {}
                 dict_shares_fleet = {}
                 
                 for t in types_all:
                     # Determine which fleet share set to use
-                    set_trn_fleet_by_sh = set_pass_trn_fleet_by_sh if t in types_pass else set_fre_trn_fleet_by_sh
+                    # set_trn_fleet_by_sh = set_pass_trn_fleet_by_sh if t in types_pass else set_fre_trn_fleet_by_sh
                     
-                    # Calculate the share of non-electric fuel
-                    sh_non_electric_k = calculate_share_non_electric(set_trn_fleet_by_sh, t, fuels_nonelectric)
+                    # # Calculate the share of non-electric fuel
+                    # sh_non_electric_k = calculate_share_non_electric(set_trn_fleet_by_sh, t, fuels_nonelectric)
                     
                     # Get electrification, hydrogen, and non-electric values
                     list_electrification = get_parameter_values(df_trn_data, this_country, t, 'Electrification', time_vector, 0)
                     list_hydrogen = get_parameter_values(df_trn_data, this_country, t, 'Hydrogen Penetration', time_vector, 0)
                     list_non_electric = [100 - ele - h2 for ele, h2 in zip(list_electrification, list_hydrogen)]
-                
+                    # # Update fuel economy and fleet information
+                    # list_fe_k, list_nonele_fleet_k = update_fuel_economy_and_fleet(df_trn_data, fuels, fuels_nonelectric, sh_non_electric_k, list_non_electric, this_country, t, time_vector)
+                    
+                    # make an exception to Uruguay 2025, check this change after
+                    ############################################################
+                    set_trn_fleet_by_sh_dict = {}
+                    sh_non_electric_k_dict = {}
+                    for ye in years_exception_temp_fix:
+                        set_trn_fleet_by_sh_dict[ye] = set_pass_trn_fleet_by_sh_dict[ye] if t in types_pass else set_fre_trn_fleet_by_sh_dict[ye]
+                        
+                        # Calculate the share of non-electric fuel
+                        sh_non_electric_k_dict[ye] = calculate_share_non_electric(set_trn_fleet_by_sh_dict[ye], t, fuels_nonelectric)
+                    
                     # Update fuel economy and fleet information
-                    list_fe_k, list_nonele_fleet_k = update_fuel_economy_and_fleet(df_trn_data, fuels, fuels_nonelectric, sh_non_electric_k, list_non_electric, this_country, t, time_vector)
-                
+                    list_fe_k, list_nonele_fleet_k = update_fuel_economy_and_fleet_1(df_trn_data, fuels, fuels_nonelectric, sh_non_electric_k_dict, list_non_electric, this_country, t, time_vector, years_exception_temp_fix)
+                    ############################################################
+                    
+                    #if t == 'Automoviles':
+                    #    print('check the list_nonele_fleet_k')
+                    #    sys.exit()
+
                     # ... rest of the code to handle electrification and hydrogen adjustments ...
                     
                     # Store the data for this "type"
@@ -4833,7 +5048,40 @@ for s in range(len(scenario_list)):
                     else:
                         emis_fact = 0
                     return fuel_con * emis_fact, fuel_energy_model
-    
+
+                # '''BEGIN TEST'''
+                # t = 'Automoviles'
+                # ye_i = 0
+                # for ye in years_exception_temp_fix:
+                #     print('\n---')
+                #     print(ye)
+                #     this_gpkm = dict_gpkm_gtkm[t][ye_i]
+                #     this_total_fleet = 1e9 * this_gpkm / (dict_lf[t] * dict_km[t])
+
+                #     print(this_gpkm)
+                #     print('Total Fleet: ', this_total_fleet)
+
+                #     this_res_fleet_val_sum = 0
+                #     for this_f in fuels:
+                #         this_res_fleet_val = dict_resi_cap_trn[t][this_f][ye_i]
+                #         this_res_fleet_val_sum += this_res_fleet_val
+
+                #     print('Residual Fleet: ', this_res_fleet_val_sum)
+
+                #     for this_f in fuels:
+                #         this_res_fleet_val = dict_resi_cap_trn[t][this_f][ye_i]
+                #         this_res_fleet_sh = 100*this_res_fleet_val / this_res_fleet_val_sum
+                #         this_calculated_sh = dict_shares_fleet[t][this_f][ye_i]
+                #         # Print alert if these are different:
+                #         if this_res_fleet_sh != this_calculated_sh:
+                #             print(this_f, round(this_res_fleet_sh, 3), round(this_calculated_sh, 3), 'ERROR!')
+
+                #     ye_i += 1
+
+                # print('test the fleet percentages and match with residual fleet shares')
+                # if this_scen =='BAU':
+                #     sys.exit()
+
                 for this_f in fuels:
                     dict_diffs_f_rf.update({this_f: {}})
                     this_list = []
@@ -4868,9 +5116,6 @@ for s in range(len(scenario_list)):
                             this_fuel_con += deepcopy(add_fuel_con)
                             dict_trn_pj_2[this_f][t][y] = deepcopy(add_fuel_con)
                             
-                            
-                            # if t=='Automoviles' and this_f == 'GASOLINA/ALCOHOL' and 0 <= y <= 5:
-                            #     print(this_scen,this_gpkm_gtkm * this_sh_fl)
                             this_gpkm_gtkm_k = this_gpkm_gtkm * this_sh_fl
                             dict_gpkm_gtkm_k[t][this_f][y] = this_gpkm_gtkm_k
                 
@@ -4989,23 +5234,23 @@ for s in range(len(scenario_list)):
                     
                     # make an exception to Uruguay 2025, check this change after
                     ############################################################
-                    years_exception_temp_fix = [2021,2022,2023]
+                    # years_exception_temp_fix = [2021,2022,2023]
                     ############################################################
                 
                     for y in range(len(time_vector)):
                         # make an exception to Uruguay 2025, check this change after
                         ############################################################
-                        if time_vector[y] in years_exception_temp_fix:
-                            tot_fleet_lst[y] = res_fleet_lst[y]
-                            if time_vector[y] == 2021:
-                                this_new_fleet = 0
-                            else:
-                                this_new_fleet = 0 if tot_fleet_lst[y] < res_fleet_lst[y-1] else tot_fleet_lst[y] - res_fleet_lst[y-1]
-                        else:
-                            this_new_fleet = tot_fleet_lst[y] - res_fleet_lst[y] - (0 if y == 0 else accum_fleet_lst[y])
+                        # if time_vector[y] in years_exception_temp_fix:
+                        #     # tot_fleet_lst[y] = res_fleet_lst[y]
+                        #     if time_vector[y] == 2021:
+                        #         this_new_fleet = 0
+                        #     else:
+                        #         this_new_fleet = 0 if res_fleet_lst[y] < res_fleet_lst[y-1] else res_fleet_lst[y] - res_fleet_lst[y-1]
+                        # else:
+                        #     this_new_fleet = tot_fleet_lst[y] - res_fleet_lst[y] - (0 if y == 0 else accum_fleet_lst[y])
                         ############################################################
                         
-                        # this_new_fleet = tot_fleet_lst[y] - res_fleet_lst[y] - (0 if y == 0 else accum_fleet_lst[y])
+                        this_new_fleet = tot_fleet_lst[y] - res_fleet_lst[y] - (0 if y == 0 else accum_fleet_lst[y])
                         
                         # if time_vector[y] == 2033 and t == 'Automoviles' and f == 'GASOLINA/ALCOHOL':
                         #     print(this_scen)
@@ -5034,7 +5279,7 @@ for s in range(len(scenario_list)):
 
                     # make an exception to Uruguay 2025, check this change after
                     ############################################################
-                    dict_fleet_k[t][f] = tot_fleet_lst
+                    # dict_fleet_k[t][f] = tot_fleet_lst
                     ############################################################
                     
                     return new_fleet_lst, accum_fleet_lst, times_neg_new_fleet, times_neg_new_fleet_sto, \

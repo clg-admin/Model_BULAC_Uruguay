@@ -23,6 +23,7 @@
 # activity data of each tech/fuel.
 by_one_tax_by_time: True
 by_activity: True
+by_factores_fuel: False
 
 # This variable indicates if the user want to
 # interpolate the list of the unit taxes or not

@@ -943,9 +943,8 @@ def project_demand(time_vector, ini_simu_yr, projtype, mask, df, sum_demand_by,
         # make an exception to Uruguay 2025, check this change after
         ############################################################
         if time_vector[y] in years_exception_temp_fix:
-            trn_dem[y] = list_excep_sum_demand_by[y]
-        if y == 0:
-            trn_dem_2[y] = sum_demand_by  # Asegurar que trn_dem_2 tenga un valor inicial
+            trn_dem[y] = list_excep_sum_demand_by[years_exception_temp_fix[y]]
+            trn_dem_2[y] = list_excep_sum_demand_by[years_exception_temp_fix[y]] # Asegurar que trn_dem_2 tenga un valor inicial
         ############################################################
 
     # for y in range(len(time_vector)):
@@ -1144,6 +1143,95 @@ def calculate_gpkm_for_types(time_vector, demand, priv_adj_share, pub_adj_share,
 		gpkm_nonmot.append(this_gpkm_nonmot)
 
 	return gpkm_pri_k, gpkm_pub_k, gpkm_nonmot, lpriv, lpub
+
+# make an exception to Uruguay 2025, check this change after
+############################################################
+# Function #34.1
+def calculate_gpkm_for_types1(time_vector, demand, priv_adj_share_dict, pub_adj_share_dict, 
+                              pass_trn_dem_sh_private_dict, pass_trn_dem_sh_public_dict, mode_shift, non_motorized, 
+                              mask_mode_shift, mask_non_motorized, priv_types, pub_types, val_mshft, 
+                              df_trn_data, ini_simu_yr, years_exception_temp_fix):
+    """
+    Calculate gpkm (passenger or freight kilometers) for various transport types across the time vector, 
+    accounting for mode shifts and non-motorized transport.
+    
+    Args:
+        time_vector (list): List of years for which the calculations are performed.
+        demand (list[type]): List of demand values for each year.
+        priv_adj_share (dict[type]): Dictionary of adjusted share percentages for private transport types.
+        pub_adj_share (dict[type]): Dictionary of adjusted share percentages for public transport types.
+        mode_shift (list[type]): List of mode shift percentages for each year.
+        non_motorized (list[type]): List of non-motorized transport percentages for each year.
+        mask_mode_shift (pandas.core.series.Series): Filter mask for extracting mode shift data from the DataFrame.
+        mask_non_motorized (pandas.core.series.Series): Filter mask for extracting non-motorized data from the DataFrame.
+        priv_types (list[str]): List of private transport types (e.g., cars, motorcycles).
+        pub_types (list[str]): List of public transport types (e.g., buses, trains).
+        val_mshft (float): Value used for interpolating mode shifts across the time vector.
+        df_trn_data (DataFrame): DataFrame with transport data.
+        ini_simu_yr (int): Año inicial de la simulación.
+        years_exception_temp_fix (list): Lista de años para los cuales se aplican excepciones temporales.
+
+    Returns:
+        gpkm_pri_k (dict): Dictionary with computed gpkm values for private types, keyed by transport type.
+        gpkm_pub_k (dict): Dictionary with computed gpkm values for public types, keyed by transport type.
+        gpkm_nonmot (list): List of computed gpkm values for non-motorized transport for each year.
+        lpriv (list): List of total gpkm values for private transport types for each year.
+        lpub (list): List of total gpkm values for public transport types for each year.
+    """
+    gpkm_pri_k = {key: [] for key in priv_types}
+    gpkm_pub_k = {key: [] for key in pub_types}
+    gpkm_nonmot = []
+    lpub = []
+    lpriv = []
+
+    # ...iterating across years before modifications (9):
+    for y in range(len(time_vector)):
+        mode_shift.append(df_trn_data.loc[mask_mode_shift][time_vector[y]].iloc[0])
+        non_motorized.append(df_trn_data.loc[mask_non_motorized][time_vector[y]].iloc[0])
+
+    # Modify 9: make the list electrification and hydrogen different
+    list_mshft_raw = deepcopy(mode_shift)
+    list_mshft = interpolation_non_linear_final(time_vector, list_mshft_raw, val_mshft, ini_simu_yr)
+
+    for y in range(len(time_vector)):
+        if time_vector[y] in years_exception_temp_fix:
+            pass_trn_dem_sh_private = pass_trn_dem_sh_private_dict[years_exception_temp_fix[y]]
+            pass_trn_dem_sh_public = pass_trn_dem_sh_public_dict[years_exception_temp_fix[y]]
+            priv_adj_share = priv_adj_share_dict[years_exception_temp_fix[y]]
+            pub_adj_share = pub_adj_share_dict[years_exception_temp_fix[y]]
+        else:
+            pass_trn_dem_sh_private = pass_trn_dem_sh_private_dict[years_exception_temp_fix[-1]]
+            pass_trn_dem_sh_public = pass_trn_dem_sh_public_dict[years_exception_temp_fix[-1]]
+            priv_adj_share = priv_adj_share_dict[years_exception_temp_fix[-1]]
+            pub_adj_share = pub_adj_share_dict[years_exception_temp_fix[-1]]
+
+        # For private types
+        this_gpkm_priv = demand[y] * (pass_trn_dem_sh_private - mode_shift[y] - non_motorized[y]) / 100
+        calculate_gpkm(this_gpkm_priv, priv_types, priv_adj_share, y, gpkm_pri_k, lpriv)
+
+        # for t in priv_types:
+        #     sh_k_adj = priv_adj_share[t]
+        #     this_gpkm_k = this_gpkm_priv * sh_k_adj / 100
+        #     gpkm_pri_k[t].append(this_gpkm_k)
+        # lpriv.append(this_gpkm_priv)
+
+        # For public types
+        this_gpkm_pub = demand[y] * (pass_trn_dem_sh_public + mode_shift[y]) / 100
+        calculate_gpkm(this_gpkm_pub, pub_types, pub_adj_share, y, gpkm_pub_k, lpub)
+
+        # for t in pub_types:
+        #     sh_k_adj = pub_adj_share[t]
+        #     this_gpkm_k = this_gpkm_pub * sh_k_adj / 100
+        #     gpkm_pub_k[t].append(this_gpkm_k)
+        # lpub.append(this_gpkm_pub)
+
+        # For non-motorized types
+        this_gpkm_nonmot = demand[y] * non_motorized[-1]
+        gpkm_nonmot.append(this_gpkm_nonmot)
+
+    return gpkm_pri_k, gpkm_pub_k, gpkm_nonmot, lpriv, lpub
+
+############################################################
 	
 # Function #35
 def initialize_dict_of_lists(list_actual):
@@ -1202,6 +1290,35 @@ def compute_freight_values(set_fre_trn, fre_trn_dem, set_fre_trn_dem_sh):
 
 	return gtkm_freight_k
 	
+# make an exception to Uruguay 2025, check this change after
+############################################################
+# Function #37.1
+def compute_freight_values1(set_fre_trn, fre_trn_dem, set_fre_trn_dem_sh_dict,time_vector,years_exception_temp_fix):
+    """
+    Compute freight values (gtkm) for each transportation type based on freight demand and share.
+    
+    Args:
+    - set_fre_trn (set): Set of freight transportation types.
+    - fre_trn_dem (list): List of total freight demands for each year.
+    - set_fre_trn_dem_sh (dict): Dictionary with freight demand shares for each transportation type.
+    
+    Returns:
+    - gtkm_freight_k (dict): Dictionary with computed gtkm freight values for each type and year, keyed by transportation type.
+    """
+    gtkm_freight_k = {key: [] for key in set_fre_trn}
+
+    for y, demand in enumerate(fre_trn_dem):
+        if time_vector[y] in years_exception_temp_fix:
+            set_fre_trn_dem_sh = set_fre_trn_dem_sh_dict[time_vector[y]]
+        else:
+            set_fre_trn_dem_sh = set_fre_trn_dem_sh_dict[years_exception_temp_fix[-1]]
+        for freight_type in set_fre_trn:
+            this_fre_sh_k = set_fre_trn_dem_sh[freight_type]
+            this_fre_k = demand * this_fre_sh_k / 100
+            gtkm_freight_k[freight_type].append(this_fre_k)
+
+    return gtkm_freight_k
+############################################################
 	
 # Function #38
 def fetch_fleet_share_by_fuel(df, vehicle_type, country, fuel, year):
@@ -1406,6 +1523,51 @@ def update_fuel_economy_and_fleet(df, fuels, fuels_nonelectric, sh_non_electric_
 	
 	return list_fe_k, list_nonele_fleet_k
 	
+# make an exception to Uruguay 2025, check this change after
+############################################################
+# Function #42.1
+def update_fuel_economy_and_fleet_1(df, fuels, fuels_nonelectric, sh_non_electric_k_dict, list_non_electric, this_country, t, time_vector, years_exception_temp_fix):
+    """
+    Update fuel economy and fleet information for each fuel type based on non-electric shares and other factors.
+    
+    Args:
+    - df (DataFrame): DataFrame containing transportation data.
+    - fuels (list): List of all fuel types.
+    - fuels_nonelectric (list): List of non-electric fuel types.
+    - sh_non_electric_k_dict (dict): Dictionary of shares for non-electric fuels.
+    - list_non_electric (list): List of non-electric fleet data.
+    - this_country (str): Target country for data extraction.
+    - t (str): The specific transport type.
+    - time_vector (list): List of years for which the calculations are performed.
+    
+    Returns:
+    - list_fe_k (dict): Dictionary of fuel economy values by fuel type.
+    - list_nonele_fleet_k (dict): Dictionary of non-electric fleet data by fuel type.
+    """
+    list_fe_k = {}
+    list_nonele_fleet_k = {}
+    for af in fuels:
+        list_fe_k[af] = []
+        if af in fuels_nonelectric:
+            list_nonele_fleet_k[af] = []
+
+    for y in range(len(time_vector)):
+        if time_vector[y] in years_exception_temp_fix:
+            sh_non_electric_k = sh_non_electric_k_dict[years_exception_temp_fix[y]]
+        else:
+            sh_non_electric_k = sh_non_electric_k_dict[years_exception_temp_fix[-1]]
+        for af in fuels_nonelectric:
+            this_sh_ne_k = sh_non_electric_k[af]
+            this_fleet_ne_k = this_sh_ne_k * list_non_electric[y] / 100
+            list_nonele_fleet_k[af].append(this_fleet_ne_k)
+
+        for af in fuels:
+            value = get_parameter_values(df, this_country, t, 'Fuel economy', [time_vector[y]], af)[0]
+            list_fe_k[af].append(value)
+    
+    return list_fe_k, list_nonele_fleet_k
+############################################################
+
 # Function #43
 def initialize_nested_dict(types, fuels, time_vector_length):
 	"""
@@ -1646,23 +1808,23 @@ def calculate_new_accumulated_fleet(t, f, dict_fleet_k, dict_fuel_con, dict_resi
     
     # make an exception to Uruguay 2025, check this change after
     ############################################################
-    years_exception_temp_fix = [2021,2022,2023]
+    # years_exception_temp_fix = [2021,2022,2023]
     ############################################################
 
     for y in range(len(time_vector)):
         # make an exception to Uruguay 2025, check this change after
         ############################################################
-        if time_vector[y] in years_exception_temp_fix:
-            tot_fleet_lst[y] = res_fleet_lst[y]
-            if time_vector[y] == 2021:
-                this_new_fleet = 0
-            else:
-                this_new_fleet = 0 if res_fleet_lst[y] < res_fleet_lst[y-1] else res_fleet_lst[y] - res_fleet_lst[y-1]
-        else:
-            this_new_fleet = tot_fleet_lst[y] - res_fleet_lst[y] - (0 if y == 0 else accum_fleet_lst[y])
+        # if time_vector[y] in years_exception_temp_fix:
+        #     tot_fleet_lst[y] = res_fleet_lst[y]
+        #     if time_vector[y] == 2021:
+        #         this_new_fleet = 0
+        #     else:
+        #         this_new_fleet = 0 if res_fleet_lst[y] < res_fleet_lst[y-1] else res_fleet_lst[y] - res_fleet_lst[y-1]
+        # else:
+        #     this_new_fleet = tot_fleet_lst[y] - res_fleet_lst[y] - (0 if y == 0 else accum_fleet_lst[y])
         ############################################################
         
-        # this_new_fleet = tot_fleet_lst[y] - res_fleet_lst[y] - (0 if y == 0 else accum_fleet_lst[y])
+        this_new_fleet = tot_fleet_lst[y] - res_fleet_lst[y] - (0 if y == 0 else accum_fleet_lst[y])
         if this_new_fleet >= 0:
             new_fleet_lst[y] = this_new_fleet
             for y2 in range(y, y + int(list_op_life[y])):
@@ -1674,7 +1836,7 @@ def calculate_new_accumulated_fleet(t, f, dict_fleet_k, dict_fuel_con, dict_resi
             
     # make an exception to Uruguay 2025, check this change after
     ############################################################
-    dict_fleet_k[t][f] = tot_fleet_lst
+    # dict_fleet_k[t][f] = tot_fleet_lst
     ############################################################
     
     return new_fleet_lst, accum_fleet_lst, times_neg_new_fleet, times_neg_new_fleet_sto, \
@@ -3423,7 +3585,7 @@ def print_verification_info(list_electric_sets_3_shuffle_rest, total_production,
 	sys.exit()
 
 # Function #115
-def handle_negative_production(new_prod, y, tol, time_vector, scenario, tech, country, res_energy_change):
+def handle_negative_production(new_prod, y, tol, time_vector, scenario, tech, country, res_energy_change,ini_simu_yr):
 	"""
 	Handle cases of negative production, particularly during the transition phase of generation CAPEX.
 	This function checks for negative production values and decides whether an adjustment is needed
@@ -3443,11 +3605,11 @@ def handle_negative_production(new_prod, y, tol, time_vector, scenario, tech, co
 	Returns:
 	- (bool): A boolean value indicating whether an adjustment is needed based on the conditions.
 	"""
-	if abs(new_prod) < tol and new_prod < 0 and time_vector[y] <= 2023:
+	if abs(new_prod) < tol and new_prod < 0 and time_vector[y] <= ini_simu_yr:
 		print('An expected negative in generation CAPEX occurred!')
 		print(scenario, tech, country)
 		return False  # No adjustment needed
-	elif new_prod < -tol and time_vector[y] > 2023:
+	elif new_prod < -tol and time_vector[y] > ini_simu_yr:
 		if res_energy_change < 0:
 			return False  # No adjustment needed
 		elif res_energy_change >= 0:
@@ -4700,6 +4862,10 @@ def bulac_engine(base_inputs, dict_database, fut_id, this_hypercube, df_exp,
     scenario_list = list(set(df3_scen['Scenario'].tolist()))
     scenario_list.remove('ALL')
     scenario_list.sort()
+    scenarios_exceptions = ['ACELERADO', 'ALTERNATIVO']
+    for scen_del in scenarios_exceptions:
+        if scen_del in scenario_list:
+            scenario_list.remove(scen_del)
     dict_test_transport_model = {}
     
     # ... we will work with a single dictionary containing all simulations:
@@ -5332,10 +5498,10 @@ def bulac_engine(base_inputs, dict_database, fut_id, this_hypercube, df_exp,
                                     use_vals_ratio.append(1)
         
                             interp_vals_linear = \
-                                interpolation_to_end(time_vector, 2021, use_vals,
+                                interpolation_to_end(time_vector, ini_simu_yr, use_vals,
                                                      'last', '')
                             interp_mults_linear = \
-                                interpolation_to_end(time_vector, 2021, use_vals_ratio,
+                                interpolation_to_end(time_vector, ini_simu_yr, use_vals_ratio,
                                                      'last', '')
                             interp_vals_spirit = [interp_mults_linear[y]*dem_elec_tot_ref[y] if y < ratio_adjust_idx else interp_vals_linear[y] for y in range(len(time_vector))]
                                
@@ -7319,38 +7485,36 @@ def bulac_engine(base_inputs, dict_database, fut_id, this_hypercube, df_exp,
                     
                     # For Passenger trains
                     list_pass_trn = filter_transport_types(list_trn_type, list_trn_lvl1_u_raw, 'Passenger')
-                    # make an exception to Uruguay 2025, check this change after
-                    ############################################################
-                    set_pass_trn_fleet_by, set_pass_trn_dem_by, set_pass_trn_dem_sh, sum_pass_trn_dem_by = update_dictionaries(list_pass_trn, df_trn_data, this_country, per_first_yr, dict_lf, dict_km,per_first_yr)
-                    ############################################################
                     # set_pass_trn_fleet_by, set_pass_trn_dem_by, set_pass_trn_dem_sh, sum_pass_trn_dem_by = update_dictionaries(list_pass_trn, df_trn_data, this_country, per_first_yr, dict_lf, dict_km)
-                    
-                    
-                    # make an exception to Uruguay 2025, check this change after
-                    ############################################################
-                    years_exception_temp_fix = [2021,2022,2023]
-                    list_excep_sum_pass_trn_dem_by = []
-                    for ye in years_exception_temp_fix:
-                        set_pass_trn_fleet_by1, set_pass_trn_dem_by1, set_pass_trn_dem_sh1, sum_pass_trn_dem_by1 = update_dictionaries(list_pass_trn, df_trn_data, this_country, ye, dict_lf, dict_km,per_first_yr)
-                        list_excep_sum_pass_trn_dem_by.append(sum_pass_trn_dem_by1)
-                    ############################################################
+                    # set_fre_trn_fleet_by, set_fre_trn_dem_by, set_fre_trn_dem_sh, sum_fre_trn_dem_by = update_dictionaries(list_fre_trn, df_trn_data, this_country, per_first_yr, dict_lf, dict_km)
                     
                     # For Freight trains
                     list_fre_trn = filter_transport_types(list_trn_type, list_trn_lvl1_u_raw, 'Freight')
-                    # make an exception to Uruguay 2025, check this change after
-                    ############################################################
-                    set_fre_trn_fleet_by, set_fre_trn_dem_by, set_fre_trn_dem_sh, sum_fre_trn_dem_by = update_dictionaries(list_fre_trn, df_trn_data, this_country, per_first_yr, dict_lf, dict_km,per_first_yr)
-                    ############################################################
-                    # set_fre_trn_fleet_by, set_fre_trn_dem_by, set_fre_trn_dem_sh, sum_fre_trn_dem_by = update_dictionaries(list_fre_trn, df_trn_data, this_country, per_first_yr, dict_lf, dict_km)
+                    
                     
                     # make an exception to Uruguay 2025, check this change after
                     ############################################################
                     years_exception_temp_fix = [2021,2022,2023]
-                    list_excep_sum_fre_trn_dem_by = []
+                    list_excep_sum_pass_trn_dem_by = {}
+                    list_excep_set_pass_trn_fleet_by1 = {}
+                    list_excep_set_pass_trn_dem_sh1 = {}
+                    
+                    list_excep_sum_fre_trn_dem_by = {}
+                    list_excep_set_fre_trn_fleet_by1 = {}
+                    list_excep_set_fre_trn_dem_sh1 = {}
+                    
                     for ye in years_exception_temp_fix:
-                        set_fre_trn_fleet_by1, set_fre_trn_dem_by1, set_fre_trn_dem_sh1, sum_fre_trn_dem_by1 = update_dictionaries(list_fre_trn, df_trn_data, this_country, ye, dict_lf, dict_km,per_first_yr)
-                        list_excep_sum_fre_trn_dem_by.append(sum_fre_trn_dem_by1)
+                        set_pass_trn_fleet_by, set_pass_trn_dem_by, set_pass_trn_dem_sh, sum_pass_trn_dem_by = update_dictionaries(list_pass_trn, df_trn_data, this_country, ye, dict_lf, dict_km,per_first_yr)
+                        list_excep_sum_pass_trn_dem_by[ye] = sum_pass_trn_dem_by
+                        list_excep_set_pass_trn_fleet_by1[ye] = set_pass_trn_fleet_by
+                        list_excep_set_pass_trn_dem_sh1[ye] = set_pass_trn_dem_sh
+    
+                        set_fre_trn_fleet_by, set_fre_trn_dem_by, set_fre_trn_dem_sh, sum_fre_trn_dem_by = update_dictionaries(list_fre_trn, df_trn_data, this_country, ye, dict_lf, dict_km,per_first_yr)
+                        list_excep_sum_fre_trn_dem_by[ye] = sum_fre_trn_dem_by
+                        list_excep_set_fre_trn_fleet_by1[ye] = set_fre_trn_fleet_by
+                        list_excep_set_fre_trn_dem_sh1[ye] = set_fre_trn_dem_sh
                     ############################################################
+
 
                     # 1.b) estimate the demand growth
                     # for this we need to extract a couple of variables from
@@ -7385,7 +7549,7 @@ def bulac_engine(base_inputs, dict_database, fut_id, this_hypercube, df_exp,
                         pass_trn_dem, pass_trn_dem_2 = project_demand(time_vector, ini_simu_yr, projtype_dem_pas, mask_dem_pas, df_trn_data, sum_pass_trn_dem_by, this_gdp_growth_vals, this_gdp_growth_vals_2, this_gdp_pc_growth_vals, this_gdp_pc_growth_vals_2, this_pop_growth_vals, list_ela_pas, list_ela_pas_2, 'pas',list_excep_sum_pass_trn_dem_by)
                         ############################################################
                         # pass_trn_dem, pass_trn_dem_2 = project_demand(time_vector, ini_simu_yr, projtype_dem_pas, mask_dem_pas, df_trn_data, sum_pass_trn_dem_by, this_gdp_growth_vals, this_gdp_growth_vals_2, this_gdp_pc_growth_vals, this_gdp_pc_growth_vals_2, this_pop_growth_vals, list_ela_pas, list_ela_pas_2, 'pas')
-                    
+                        
                     projtype_dem_fre, mask_dem_fre = get_dem_model_projtype('Freight', this_country, 'Demand', 'projection', df_trn_data)
                     if 'endogenous' not in projtype_dem_fre:
                         fre_trn_dem = fun_dem_proj(time_vector, projtype_dem_fre, mask_dem_fre, df_trn_data)
@@ -7425,12 +7589,28 @@ def bulac_engine(base_inputs, dict_database, fut_id, this_hypercube, df_exp,
                     set_pass_trn_pub = extract_transport_types(list_trn_type, list_trn_lvl2_u_raw, 'Public')
                     
                     # Calculate demand shares
-                    pass_trn_dem_sh_private = calculate_demand_share(set_pass_trn_priv, set_pass_trn_dem_sh)
-                    pass_trn_dem_sh_public = calculate_demand_share(set_pass_trn_pub, set_pass_trn_dem_sh)
+                    # pass_trn_dem_sh_private = calculate_demand_share(set_pass_trn_priv, set_pass_trn_dem_sh)
+                    # pass_trn_dem_sh_public = calculate_demand_share(set_pass_trn_pub, set_pass_trn_dem_sh)
                     
-                    # Adjust demand shares
-                    pass_trn_dem_sh_private_k = adjust_demand_share(set_pass_trn_priv, set_pass_trn_dem_sh, pass_trn_dem_sh_private)
-                    pass_trn_dem_sh_public_k = adjust_demand_share(set_pass_trn_pub, set_pass_trn_dem_sh, pass_trn_dem_sh_public)
+                    # # Adjust demand shares
+                    # pass_trn_dem_sh_private_k = adjust_demand_share(set_pass_trn_priv, set_pass_trn_dem_sh, pass_trn_dem_sh_private)
+                    # pass_trn_dem_sh_public_k = adjust_demand_share(set_pass_trn_pub, set_pass_trn_dem_sh, pass_trn_dem_sh_public)
+
+                    # make an exception to Uruguay 2025, check this change after
+                    ############################################################
+                    pass_trn_dem_sh_private_dict = {}
+                    pass_trn_dem_sh_public_dict = {}
+                    pass_trn_dem_sh_private_k_dict = {}
+                    pass_trn_dem_sh_public_k_dict = {}
+                    for ye in years_exception_temp_fix:
+                        # Calculate demand shares
+                        pass_trn_dem_sh_private_dict[ye] = calculate_demand_share(set_pass_trn_priv, list_excep_set_pass_trn_dem_sh1[ye])
+                        pass_trn_dem_sh_public_dict[ye] = calculate_demand_share(set_pass_trn_pub, list_excep_set_pass_trn_dem_sh1[ye])
+                        
+                        # Adjust demand shares
+                        pass_trn_dem_sh_private_k_dict[ye] = adjust_demand_share(set_pass_trn_priv, list_excep_set_pass_trn_dem_sh1[ye], pass_trn_dem_sh_private_dict[ye])
+                        pass_trn_dem_sh_public_k_dict[ye] = adjust_demand_share(set_pass_trn_pub, list_excep_set_pass_trn_dem_sh1[ye], pass_trn_dem_sh_public_dict[ye])
+                    ############################################################
 
                     # Extract data from dataframe based on conditions
                     list_mode_shift, mask_mode_shift = extract_data_from_dataframe((df_trn_data['Parameter'] == 'Mode shift'), time_vector, df_trn_data, this_country)
@@ -7439,13 +7619,34 @@ def bulac_engine(base_inputs, dict_database, fut_id, this_hypercube, df_exp,
                     
                     # Use the function to calculate gpkm for various transport types
                     # Modify 9
-                    gpkm_pri_k, gpkm_pub_k, gpkm_nonmot, lpriv, lpub = calculate_gpkm_for_types(
+                    # gpkm_pri_k, gpkm_pub_k, gpkm_nonmot, lpriv, lpub = calculate_gpkm_for_types(
+                    #     time_vector,
+                    #     pass_trn_dem,
+                    #     pass_trn_dem_sh_private_k,
+                    #     pass_trn_dem_sh_public_k,
+                    #     pass_trn_dem_sh_private,
+                    #     pass_trn_dem_sh_public,
+                    #     list_mode_shift,
+                    #     list_non_motorized,
+                    #     mask_mode_shift,
+                    #     mask_non_motorized,
+                    #     set_pass_trn_priv,
+                    #     set_pass_trn_pub,
+                    #     val_mshft,
+                    #     df_trn_data,
+                    #     ini_simu_yr
+                    # )
+                    
+                    # make an exception to Uruguay 2025, check this change after
+                    ############################################################
+                    # Use the function to calculate gpkm for various transport types
+                    gpkm_pri_k, gpkm_pub_k, gpkm_nonmot, lpriv, lpub = calculate_gpkm_for_types1(
                         time_vector,
                         pass_trn_dem,
-                        pass_trn_dem_sh_private_k,
-                        pass_trn_dem_sh_public_k,
-                        pass_trn_dem_sh_private,
-                        pass_trn_dem_sh_public,
+                        pass_trn_dem_sh_private_k_dict,
+                        pass_trn_dem_sh_public_k_dict,
+                        pass_trn_dem_sh_private_dict,
+                        pass_trn_dem_sh_public_dict,
                         list_mode_shift,
                         list_non_motorized,
                         mask_mode_shift,
@@ -7454,8 +7655,10 @@ def bulac_engine(base_inputs, dict_database, fut_id, this_hypercube, df_exp,
                         set_pass_trn_pub,
                         val_mshft,
                         df_trn_data,
-                        ini_simu_yr
+                        ini_simu_yr,
+                        years_exception_temp_fix
                     )
+                    ############################################################
 
                     # 1.d) apply the logistics parameters:
                     # Initialize gtkm_freight_k
@@ -7463,9 +7666,14 @@ def bulac_engine(base_inputs, dict_database, fut_id, this_hypercube, df_exp,
                     # Extract logistics data
                     list_logistics = extract_logistics_data(df_trn_data, time_vector, this_country)
                     # Compute freight values
-                    gtkm_freight_k = compute_freight_values(
-                        list_fre_trn, fre_trn_dem, set_fre_trn_dem_sh)
-
+                    # gtkm_freight_k = compute_freight_values(
+                    #     list_fre_trn, fre_trn_dem, set_fre_trn_dem_sh)
+                    
+                    
+                    gtkm_freight_k = compute_freight_values1(
+                        list_fre_trn, fre_trn_dem, list_excep_set_fre_trn_dem_sh1,
+                        time_vector,years_exception_temp_fix)
+                    
                     # TM 2) Estimate the required energy for transport
                     """
                     Paso 1: obtener el % de flota por fuel de cada carrocería
@@ -7482,14 +7690,28 @@ def bulac_engine(base_inputs, dict_database, fut_id, this_hypercube, df_exp,
 
 
 
-                    # Using the functions to replace the existing code
-                    set_pass_trn_fleet_by_sh, dict_resi_cap_trn_V_pass = calculate_fleet_shares_by_vehicle_type(
-                        types_pass, fuels, df_trn_data, this_country, per_first_yr, time_vector, set_pass_trn_fleet_by
-                    )
+                    # # Using the functions to replace the existing code
+                    # set_pass_trn_fleet_by_sh, dict_resi_cap_trn_V_pass = calculate_fleet_shares_by_vehicle_type(
+                    #     types_pass, fuels, df_trn_data, this_country, per_first_yr, time_vector, set_pass_trn_fleet_by
+                    # )
                     
-                    set_fre_trn_fleet_by_sh, dict_resi_cap_trn_V_fre = calculate_fleet_shares_by_vehicle_type(
-                        types_fre, fuels, df_trn_data, this_country, per_first_yr, time_vector, set_fre_trn_fleet_by
-                    )
+                    # set_fre_trn_fleet_by_sh, dict_resi_cap_trn_V_fre = calculate_fleet_shares_by_vehicle_type(
+                    #     types_fre, fuels, df_trn_data, this_country, per_first_yr, time_vector, set_fre_trn_fleet_by
+                    # )
+                    
+                    # make an exception to Uruguay 2025, check this change after
+                    ############################################################
+                    set_pass_trn_fleet_by_sh_dict = {}
+                    set_fre_trn_fleet_by_sh_dict = {}
+                    for ye in years_exception_temp_fix:
+                        set_pass_trn_fleet_by_sh_dict[ye], dict_resi_cap_trn_V_pass = calculate_fleet_shares_by_vehicle_type(
+                            types_pass, fuels, df_trn_data, this_country, ye, time_vector, list_excep_set_pass_trn_fleet_by1[ye]
+                        )
+                        
+                        set_fre_trn_fleet_by_sh_dict[ye], dict_resi_cap_trn_V_fre = calculate_fleet_shares_by_vehicle_type(
+                            types_fre, fuels, df_trn_data, this_country, ye, time_vector, list_excep_set_fre_trn_fleet_by1[ye]
+                        )
+                    ############################################################
 
                     # Merging the dictionaries for residual fleet capacities
                     dict_resi_cap_trn = {**dict_resi_cap_trn_V_pass, **dict_resi_cap_trn_V_fre}
@@ -7507,21 +7729,35 @@ def bulac_engine(base_inputs, dict_database, fut_id, this_hypercube, df_exp,
                     dict_shares_fleet = {}
                     
                     for t in types_all:
-                        # Determine which fleet share set to use
-                        set_trn_fleet_by_sh = set_pass_trn_fleet_by_sh if t in types_pass else set_fre_trn_fleet_by_sh
+                        # # Determine which fleet share set to use
+                        # set_trn_fleet_by_sh = set_pass_trn_fleet_by_sh if t in types_pass else set_fre_trn_fleet_by_sh
                         
-                        # Calculate the share of non-electric fuel
-                        sh_non_electric_k = calculate_share_non_electric(set_trn_fleet_by_sh, t, fuels_nonelectric)
+                        # # Calculate the share of non-electric fuel
+                        # sh_non_electric_k = calculate_share_non_electric(set_trn_fleet_by_sh, t, fuels_nonelectric)
                         
                         # Get electrification, hydrogen, and non-electric values
                         # ...iterating across years before modifications (10):
                         list_electrification = get_parameter_values(df_trn_data, this_country, t, 'Electrification', time_vector, 0)
                         list_hydrogen = get_parameter_values(df_trn_data, this_country, t, 'Hydrogen Penetration', time_vector, 0)
                         list_non_electric = [100 - ele - h2 for ele, h2 in zip(list_electrification, list_hydrogen)]
+
+                        # # Update fuel economy and fleet information
+                        # list_fe_k, list_nonele_fleet_k = update_fuel_economy_and_fleet(df_trn_data, fuels, fuels_nonelectric, sh_non_electric_k, list_electrification, list_hydrogen, this_country, t, time_vector, val_elec, ini_simu_yr)
                     
+                    
+                        # make an exception to Uruguay 2025, check this change after
+                        ############################################################
+                        set_trn_fleet_by_sh_dict = {}
+                        sh_non_electric_k_dict = {}
+                        for ye in years_exception_temp_fix:
+                            set_trn_fleet_by_sh_dict[ye] = set_pass_trn_fleet_by_sh_dict[ye] if t in types_pass else set_fre_trn_fleet_by_sh_dict[ye]
+                            
+                            # Calculate the share of non-electric fuel
+                            sh_non_electric_k_dict[ye] = calculate_share_non_electric(set_trn_fleet_by_sh_dict[ye], t, fuels_nonelectric)
+                        
                         # Update fuel economy and fleet information
-                        list_fe_k, list_nonele_fleet_k = update_fuel_economy_and_fleet(df_trn_data, fuels, fuels_nonelectric, sh_non_electric_k, list_electrification, list_hydrogen, this_country, t, time_vector, val_elec, ini_simu_yr)
-                    
+                        list_fe_k, list_nonele_fleet_k = update_fuel_economy_and_fleet_1(df_trn_data, fuels, fuels_nonelectric, sh_non_electric_k_dict, list_non_electric, this_country, t, time_vector,years_exception_temp_fix)
+                        ############################################################
                         # ... rest of the code to handle electrification and hydrogen adjustments ...
                         
                         # Store the data for this "type"
@@ -7576,6 +7812,38 @@ def bulac_engine(base_inputs, dict_database, fut_id, this_hypercube, df_exp,
                     dict_diffs_f_rf = {}
                     emissions_demand = {}  # crucial output
 
+                    # '''BEGIN TEST'''
+                    # t = 'Automoviles'
+                    # ye_i = 0
+                    # for ye in years_exception_temp_fix:
+                    #     print('\n---')
+                    #     print(ye)
+                    #     this_gpkm = dict_gpkm_gtkm[t][ye_i]
+                    #     this_total_fleet = 1e9 * this_gpkm / (dict_lf[t] * dict_km[t])
+                    
+                    #     print(this_gpkm)
+                    #     print('Total Fleet: ', this_total_fleet)
+                    
+                    #     this_res_fleet_val_sum = 0
+                    #     for this_f in fuels:
+                    #         this_res_fleet_val = dict_resi_cap_trn[t][this_f][ye_i]
+                    #         this_res_fleet_val_sum += this_res_fleet_val
+                    
+                    #     print('Residual Fleet: ', this_res_fleet_val_sum)
+                    
+                    #     for this_f in fuels:
+                    #         this_res_fleet_val = dict_resi_cap_trn[t][this_f][ye_i]
+                    #         this_res_fleet_sh = 100*this_res_fleet_val / this_res_fleet_val_sum
+                    #         this_calculated_sh = dict_shares_fleet[t][this_f][ye_i]
+                    #         # Print alert if these are different:
+                    #         if this_res_fleet_sh != this_calculated_sh:
+                    #             print(this_f, round(this_res_fleet_sh, 3), round(this_calculated_sh, 3), 'ERROR!')
+                    
+                    #     ye_i += 1
+                    
+                    # print('test the fleet percentages and match with residual fleet shares')
+                    # if this_scen =='BAU':
+                    #     sys.exit()
                                     
                     for this_f in fuels:
                         dict_diffs_f_rf.update({this_f: {}})
@@ -7626,12 +7894,12 @@ def bulac_engine(base_inputs, dict_database, fut_id, this_hypercube, df_exp,
                     
                                 # Calculate the fleet:
                                 this_fleet_k = calculate_fleet(this_gpkm_gtkm_k, dict_lf[t], dict_km[t])
-                                # if this_fleet_k*mult_fleet[y] < 10:
-                                #     dict_fleet_k[t][this_f][y] = 0
-                                # else:
-                                #     dict_fleet_k[t][this_f][y] = this_fleet_k*mult_fleet[y]
-                                dict_fleet_k[t][this_f][y] = this_fleet_k*mult_fleet[y]
 
+                                dict_fleet_k[t][this_f][y] = this_fleet_k*mult_fleet[y]
+                                # if ini_simu_yr <= time_vector[y]:
+                                #     dict_fleet_k[t][this_f][y] = this_fleet_k*mult_fleet[y]
+                                # else:
+                                #     dict_fleet_k[t][this_f][y] = this_fleet_k
                                                                                                                                                                                                         
                                 if y == 0 and dict_resi_cap_trn[t][this_f][0] != 0:
                                     dict_diffs_f_rf[this_f].update({t: this_fleet_k / dict_resi_cap_trn[t][this_f][0]})
@@ -7673,7 +7941,8 @@ def bulac_engine(base_inputs, dict_database, fut_id, this_hypercube, df_exp,
                     # *********************************************************
                     # We can calculate the required new fleets to satisfy the demand:
                     dict_new_fleet_k, dict_accum_new_fleet_k = {}, {}
-
+                    dict_accum_fleet_k = {}
+        
                     # We will take advantage to estimate the costs related to
                     # fleet and energy; we can check the cost and tax params:
                     cost_params = list(dict.fromkeys(d5_tpt['Parameter'].tolist()))
@@ -7711,6 +7980,7 @@ def bulac_engine(base_inputs, dict_database, fut_id, this_hypercube, df_exp,
                         dict_capex_out[t] = {}
                         dict_fopex_out[t] = {}
                         dict_vopex_out[t] = {}
+                        dict_accum_fleet_k[t] = {}
                         
                         for f in fuels:
                             # Assuming fun_unpack_costs and other necessary functions are defined
@@ -7757,6 +8027,7 @@ def bulac_engine(base_inputs, dict_database, fut_id, this_hypercube, df_exp,
                             dict_fopex_out[t][f] = usd_fopex_lst
                             dict_vopex_out[t][f] = usd_vopex_lst
                             dict_conv_cons[t][f] = conv_cons
+                            dict_accum_fleet_k[t][f] = accum_fleet_lst
 
                             # print(scenario_list[s])
                             
@@ -8608,7 +8879,7 @@ def bulac_engine(base_inputs, dict_database, fut_id, this_hypercube, df_exp,
                                 tol_min_neg_capex_pj_ele = 0.1
                                 adjustment_needed = handle_negative_production(
                                     this_tech_new_prod[y], y, tol_min_neg_capex_pj_ele, time_vector, 
-                                    this_scen, tech, this_country, res_energy_change
+                                    this_scen, tech, this_country, res_energy_change,ini_simu_yr
                                 )
                                 if adjustment_needed:
                                     list_tech_cf, mult_factor_cf_reno = adjust_capacity_factor(
@@ -8757,6 +9028,8 @@ def bulac_engine(base_inputs, dict_database, fut_id, this_hypercube, df_exp,
                     dict_conv_fuel_cts= dict_activities_out['Conversion Fuel Constant']
                     dict_local_country[this_country].update({'Fleet': deepcopy(dict_fleet_k)})
                     dict_local_country[this_country].update({'New Fleet': deepcopy(dict_new_fleet_k)})
+                    dict_local_country[this_country].update({'Accumulated Fleet': deepcopy(dict_accum_fleet_k)})
+                    dict_local_country[this_country].update({'Residual Fleet': deepcopy(dict_resi_cap_trn)})
                     dict_local_country[this_country].update({'Fuel Consumption': deepcopy(dict_fuel_consump)})
                     dict_local_country[this_country].update({'Conversion Fuel Constant': deepcopy(dict_conv_fuel_cts)})
                     dict_local_country[this_country].update({'Transport CAPEX [$]': deepcopy(dict_capex_out)})
@@ -9063,7 +9336,7 @@ def bulac_engine(base_inputs, dict_database, fut_id, this_hypercube, df_exp,
                     
                     useful_pj_inputs_dict = {}
                     for a_transf_key in all_eb_transf_keys:
-                        add_trasf_val = -1*float(use_ref_eb_transf[a_transf_key]['2021'])
+                        add_trasf_val = -1*float(use_ref_eb_transf[a_transf_key]['ini_simu_yr'])
                         if add_trasf_val > 0:
                             
                             update_useful_pj_inputs(
@@ -9591,7 +9864,9 @@ def bulac_engine(base_inputs, dict_database, fut_id, this_hypercube, df_exp,
         'Unit Tax Tasa_Consular',  # 26
         'Unit Tax Rodaje',  # 27
         'Fuel Consumption', # 28
-        'Conversion Fuel Constant' # 29
+        'Conversion Fuel Constant', # 29
+        'Accumulated Fleet',
+        'Residual Fleet'
     ]
 
     list_inputs_add = [i + ' (input)' for i in list_inputs]
@@ -9606,7 +9881,7 @@ def bulac_engine(base_inputs, dict_database, fut_id, this_hypercube, df_exp,
         list_fuel_clean += list(dict_eq_transport_fuels.keys())
     list_fuel_clean += ['']
 
-    output_lists = {f'h_o{i}': [] for i in range(1, 30)}
+    output_lists = {f'h_o{i}': [] for i in range(1, 32)}
     input_lists = {f'h_i{i}': [] for i in range(1, 6)}
     
     print('\n')
@@ -9682,10 +9957,10 @@ def bulac_engine(base_inputs, dict_database, fut_id, this_hypercube, df_exp,
                                 # Lists of IDs for case conditions
                                 list_output_01 = []
                                 list_output_10 = []
-                                list_output_00 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29]
+                                list_output_00 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29,30,31]
                                 list_output_11 = []
                                 
-                                for output_id in range(1, 30):  # Loop for all outputs, the second number y one more than the last output
+                                for output_id in range(1, 32):  # Loop for all outputs, the second number y one more than the last output
         
                                     # Conditions to select the correct case condition for combination of "fuel" and "tech"                        
                                     if output_id in list_output_01:
@@ -9719,7 +9994,7 @@ def bulac_engine(base_inputs, dict_database, fut_id, this_hypercube, df_exp,
                                     #     scd_key = fuel
                                     #     thd_key = y
                                     #     fth_key = None
-                                    if output_id in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28]:
+                                    if output_id in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28,30,31]:
                                         # Case 'four' 1
                                         case_type = 'four'
                                         fst_key = list_outputs[output_id - 1]
@@ -9744,11 +10019,11 @@ def bulac_engine(base_inputs, dict_database, fut_id, this_hypercube, df_exp,
                                     # Process outputs                            
                                     count_empties, output_lists[f'h_o{output_id}'] = handle_processes(count_empties, output_lists[f'h_o{output_id}'], this_data_dict, fuel, tech, case_condition, case_type, fst_key, scd_key, thd_key, fth_key)
                                                             
-                                if count_empties == 34:  # gotta pop, because it is an empty row:
+                                if count_empties == 36:  # gotta pop, because it is an empty row:
                                     # Inputs
                                     input_lists = pop_last_from_inputs(input_lists, range(1, 6))
                                     # Outputs
-                                    output_lists = pop_last_from_outputs(output_lists, range(1, 30))
+                                    output_lists = pop_last_from_outputs(output_lists, range(1, 32))
         
                                 else:
                                     h_scenario.append(this_scen_case)
@@ -9765,7 +10040,7 @@ def bulac_engine(base_inputs, dict_database, fut_id, this_hypercube, df_exp,
     
     variable_names = \
         [f'h_i{i}' for i in range(1, 6)] + \
-        [f'h_o{i}' for i in range(1, 30)]
+        [f'h_o{i}' for i in range(1, 32)]
     
     # Construct list_variables by accessing dictionaries
     list_inputs_variables = [input_lists[var_name] for var_name in variable_names if var_name in input_lists]
