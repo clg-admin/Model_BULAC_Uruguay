@@ -1455,7 +1455,7 @@ def get_parameter_values(df, this_country, t, parameter, time_vector, af):
 	return values
 	
 # Function #42
-def update_fuel_economy_and_fleet(df, fuels, fuels_nonelectric, sh_non_electric_k, list_electrification, list_hydrogen, this_country, t, time_vector, val_elec, ini_simu_yr):
+def update_fuel_economy_and_fleet(df, fuels, fuels_nonelectric, sh_non_electric_k, list_non_electric, list_electrification, list_hydrogen, this_country, t, time_vector, val_elec, ini_simu_yr):
 	"""
 	Update fuel economy and fleet information for each fuel type based on non-electric shares and other factors.
 	
@@ -1526,7 +1526,7 @@ def update_fuel_economy_and_fleet(df, fuels, fuels_nonelectric, sh_non_electric_
 # make an exception to Uruguay 2025, check this change after
 ############################################################
 # Function #42.1
-def update_fuel_economy_and_fleet_1(df, fuels, fuels_nonelectric, sh_non_electric_k_dict, list_non_electric, this_country, t, time_vector, years_exception_temp_fix):
+def update_fuel_economy_and_fleet_1(df, fuels, fuels_nonelectric, sh_non_electric_k_dict, list_electrification, list_hydrogen, this_country, t, time_vector, val_elec, ini_simu_yr, years_exception_temp_fix):
     """
     Update fuel economy and fleet information for each fuel type based on non-electric shares and other factors.
     
@@ -1539,28 +1539,50 @@ def update_fuel_economy_and_fleet_1(df, fuels, fuels_nonelectric, sh_non_electri
     - this_country (str): Target country for data extraction.
     - t (str): The specific transport type.
     - time_vector (list): List of years for which the calculations are performed.
+    - val_elec (float): Value for electrification.
+    - ini_simu_yr (int): Initial simulation year.
+    - years_exception_temp_fix (list): List of years with exceptions for temporary fixes.
     
     Returns:
     - list_fe_k (dict): Dictionary of fuel economy values by fuel type.
     - list_nonele_fleet_k (dict): Dictionary of non-electric fleet data by fuel type.
     """
-    list_fe_k = {}
-    list_nonele_fleet_k = {}
-    for af in fuels:
-        list_fe_k[af] = []
-        if af in fuels_nonelectric:
-            list_nonele_fleet_k[af] = []
-
+    list_fe_k = {af: [] for af in fuels}
+    list_nonele_fleet_k = {af: [] for af in fuels_nonelectric}
+    list_non_electric = []
+    
+    # Modify 10: make the list electrification and hydrogen different
+    list_elec_raw = deepcopy(list_electrification)
+    list_electrification = interpolation_non_linear_final(time_vector, list_elec_raw, val_elec, ini_simu_yr)
+    
+    list_h2_raw = deepcopy(list_hydrogen)
+    list_hydrogen = interpolation_non_linear_final(time_vector, list_h2_raw, val_elec, ini_simu_yr)
+    
     for y in range(len(time_vector)):
+        if list_electrification[y] + list_hydrogen[y] > 100:
+            mult_ele_h2_norm = 100 / (list_electrification[y] + list_hydrogen[y])
+            list_electrification[y] *= mult_ele_h2_norm
+            list_hydrogen[y] *= mult_ele_h2_norm
+    
+    for y in range(len(time_vector)):
+        this_ele = list_electrification[y]                      
+        this_h2 = list_hydrogen[y]
+        
         if time_vector[y] in years_exception_temp_fix:
             sh_non_electric_k = sh_non_electric_k_dict[years_exception_temp_fix[y]]
         else:
             sh_non_electric_k = sh_non_electric_k_dict[years_exception_temp_fix[-1]]
+        
+        if 100 - this_ele - this_h2 >= 0:
+            list_non_electric.append(100 - this_ele - this_h2)
+        else:
+            list_non_electric.append(0)
+        
         for af in fuels_nonelectric:
             this_sh_ne_k = sh_non_electric_k[af]
             this_fleet_ne_k = this_sh_ne_k * list_non_electric[y] / 100
             list_nonele_fleet_k[af].append(this_fleet_ne_k)
-
+        
         for af in fuels:
             value = get_parameter_values(df, this_country, t, 'Fuel economy', [time_vector[y]], af)[0]
             list_fe_k[af].append(value)
@@ -7756,7 +7778,7 @@ def bulac_engine(base_inputs, dict_database, fut_id, this_hypercube, df_exp,
                             sh_non_electric_k_dict[ye] = calculate_share_non_electric(set_trn_fleet_by_sh_dict[ye], t, fuels_nonelectric)
                         
                         # Update fuel economy and fleet information
-                        list_fe_k, list_nonele_fleet_k = update_fuel_economy_and_fleet_1(df_trn_data, fuels, fuels_nonelectric, sh_non_electric_k_dict, list_non_electric, this_country, t, time_vector,years_exception_temp_fix)
+                        list_fe_k, list_nonele_fleet_k = update_fuel_economy_and_fleet_1(df_trn_data, fuels, fuels_nonelectric, sh_non_electric_k_dict, list_electrification, list_hydrogen, this_country, t, time_vector,val_elec, ini_simu_yr,years_exception_temp_fix)
                         ############################################################
                         # ... rest of the code to handle electrification and hydrogen adjustments ...
                         
